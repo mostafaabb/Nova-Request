@@ -1,0 +1,45 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+Error: Prisma schema validation - (validate wasm)
+Error code: P1012
+[1;91merror[0m: [1mError validating field `headers` in model `Endpoint`: Field `headers` in model `Endpoint` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:51[0m
+[1;94m   | [0m
+[1;94m50 | [0m  url          String
+[1;94m51 | [0m  [1;91mheaders      Json?      @default("[]")[0m
+[1;94m52 | [0m  queryParams  Json?      @default("[]") @map("query_params")
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `queryParams` in model `Endpoint`: Field `queryParams` in model `Endpoint` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:52[0m
+[1;94m   | [0m
+[1;94m51 | [0m  headers      Json?      @default("[]")
+[1;94m52 | [0m  [1;91mqueryParams  Json?      @default("[]") @map("query_params")[0m
+[1;94m53 | [0m  body         String?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `tags` in model `Endpoint`: Field `tags` in model `Endpoint` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:55[0m
+[1;94m   | [0m
+[1;94m54 | [0m  bodyType     String     @default("json") @map("body_type")
+[1;94m55 | [0m  [1;91mtags         Json?      @default("[]")[0m
+[1;94m56 | [0m  order        Int        @default(0)
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `headers` in model `RequestHistory`: Field `headers` in model `RequestHistory` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:73[0m
+[1;94m   | [0m
+[1;94m72 | [0m  url             String
+[1;94m73 | [0m  [1;91mheaders         Json?[0m
+[1;94m74 | [0m  body            String?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `responseHeaders` in model `RequestHistory`: Field `responseHeaders` in model `RequestHistory` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:77[0m
+[1;94m   | [0m
+[1;94m76 | [0m  responseBody    String?  @map("response_body")
+[1;94m77 | [0m  [1;91mresponseHeaders Json?    @map("response_headers")[0m
+[1;94m78 | [0m  responseTime    Int?     @map("response_time")
+[1;94m   | [0m
+
+Validation Error Count: 5
+[Context: validate]
+
+Prisma CLI Version : 5.22.0

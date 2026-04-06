@@ -1,0 +1,87 @@
+// Prisma Schema for Live API Tester
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  password     String
+  name         String
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  
+  collections  Collection[]
+  history      RequestHistory[]
+
+  @@map("users")
+}
+
+model Collection {
+  id          String     @id @default(uuid())
+  userId      String     @map("user_id")
+  name        String
+  description String?
+  shareId     String?    @unique @map("share_id")
+  isPublic    Boolean    @default(false) @map("is_public")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoints   Endpoint[]
+
+  @@index([userId])
+  @@index([shareId])
+  @@map("collections")
+}
+
+model Endpoint {
+  id           String     @id @default(uuid())
+  collectionId String     @map("collection_id")
+  name         String
+  description  String?
+  method       String     @default("GET")
+  url          String
+  headers      String?
+  queryParams  String?    @map("query_params")
+  body         String?
+  bodyType     String     @default("json") @map("body_type")
+  tags         String?
+  order        Int        @default(0)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  history      RequestHistory[]
+
+  @@index([collectionId])
+  @@map("endpoints")
+}
+
+model RequestHistory {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  endpointId      String?  @map("endpoint_id")
+  method          String
+  url             String
+  headers         String?
+  body            String?
+  responseStatus  Int?     @map("response_status")
+  responseBody    String?  @map("response_body")
+  responseHeaders String?  @map("response_headers")
+  responseTime    Int?     @map("response_time")
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint        Endpoint? @relation(fields: [endpointId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("request_history")
+}
