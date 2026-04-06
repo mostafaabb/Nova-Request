@@ -11,8 +11,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 import { HeadersEditor } from './HeadersEditor';
 import { ParamsEditor } from './ParamsEditor';
 import { BodyEditor } from './BodyEditor';
-import { Send, Save, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { RequestTabs } from './RequestTabs';
+import { Send, Save, Loader2, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import toast from 'react-hot-toast';
 
@@ -20,21 +21,41 @@ const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
 export function RequestBuilder() {
   const {
-    method, url, headers, queryParams, body, bodyType, isLoading,
-    setMethod, setUrl, sendRequest,
+    getActiveTab, updateActiveTab, sendRequest, addTab, tabs, activeTabId
   } = useRequestStore();
   
+  const activeTab = getActiveTab();
   const { currentCollection, currentEndpoint, createEndpoint, updateEndpoint } = useCollectionStore();
   
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [saveDescription, setSaveDescription] = useState('');
 
+  // Initial tab if none
+  useEffect(() => {
+    if (tabs.length === 0) {
+      addTab();
+    }
+  }, [tabs, addTab]);
+
+  if (!activeTab) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+        <Plus className="h-12 w-12 mb-4 opacity-20" />
+        <p>No open tabs</p>
+        <Button variant="outline" className="mt-4" onClick={() => addTab()}>
+          New Request
+        </Button>
+      </div>
+    );
+  }
+
   const handleSend = () => {
-    if (!url.trim()) {
+    if (!activeTab.url || !activeTab.url.trim()) {
       toast.error('Please enter a URL');
       return;
     }
+    console.log('🚀 Sending request to:', activeTab.url);
     sendRequest(currentEndpoint?.id);
   };
 
@@ -53,12 +74,12 @@ export function RequestBuilder() {
       const endpointData = {
         name: saveName,
         description: saveDescription,
-        method,
-        url,
-        headers: headers.filter(h => h.key),
-        queryParams: queryParams.filter(p => p.key),
-        body,
-        bodyType,
+        method: activeTab.method,
+        url: activeTab.url,
+        headers: activeTab.headers.filter(h => h.key),
+        queryParams: activeTab.queryParams.filter(p => p.key),
+        body: activeTab.body,
+        bodyType: activeTab.bodyType,
       };
 
       if (currentEndpoint) {
@@ -78,21 +99,22 @@ export function RequestBuilder() {
   };
 
   const openSaveModal = () => {
-    if (currentEndpoint) {
-      setSaveName(currentEndpoint.name);
-      setSaveDescription(currentEndpoint.description || '');
-    }
+    setSaveName(activeTab.name !== 'New Request' ? activeTab.name : (currentEndpoint?.name || ''));
+    setSaveDescription(currentEndpoint?.description || '');
     setShowSaveModal(true);
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background">
+      {/* Tabs List */}
+      <RequestTabs />
+
       {/* URL Bar */}
-      <div className="flex gap-2 p-4 border-b border-border">
+      <div className="flex gap-2 p-4 border-b border-border shadow-sm">
         <Select 
-          value={method} 
-          onChange={(e) => setMethod(e.target.value as HttpMethod)}
-          className={cn('w-28 font-semibold', getMethodColor(method))}
+          value={activeTab.method} 
+          onChange={(e) => updateActiveTab({ method: e.target.value as HttpMethod })}
+          className={cn('w-28 font-semibold transition-all', getMethodColor(activeTab.method))}
         >
           {METHODS.map((m) => (
             <option key={m} value={m}>{m}</option>
@@ -100,15 +122,15 @@ export function RequestBuilder() {
         </Select>
 
         <Input
-          placeholder="Enter URL (e.g., https://api.example.com/users)"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          className="flex-1 font-mono text-sm"
+          placeholder="Enter URL (e.g., https://api.example.com/users) or use {{variables}}"
+          value={activeTab.url}
+          onChange={(e) => updateActiveTab({ url: e.target.value })}
+          className="flex-1 font-mono text-sm bg-muted/20 focus:bg-background transition-colors"
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
         />
 
-        <Button onClick={handleSend} disabled={isLoading}>
-          {isLoading ? (
+        <Button onClick={handleSend} disabled={activeTab.isLoading} className="shadow-sm">
+          {activeTab.isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
           ) : (
             <Send className="h-4 w-4 mr-2" />
@@ -116,7 +138,7 @@ export function RequestBuilder() {
           Send
         </Button>
 
-        <Button variant="outline" onClick={openSaveModal} disabled={!currentCollection}>
+        <Button variant="outline" onClick={openSaveModal} disabled={!currentCollection} className="shadow-sm">
           <Save className="h-4 w-4 mr-2" />
           Save
         </Button>
@@ -125,36 +147,36 @@ export function RequestBuilder() {
       {/* Request Config Tabs */}
       <div className="flex-1 overflow-hidden">
         <Tabs defaultValue="params" className="h-full flex flex-col">
-          <div className="border-b border-border px-4">
-            <TabsList>
-              <TabsTrigger value="params">
-                Query Params
-                {queryParams.filter(p => p.key).length > 0 && (
-                  <span className="ml-1 text-xs bg-primary/20 px-1.5 rounded-full">
-                    {queryParams.filter(p => p.key).length}
+          <div className="border-b border-border px-4 bg-muted/10">
+            <TabsList className="bg-transparent gap-4">
+              <TabsTrigger value="params" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1">
+                Params
+                {(Array.isArray(activeTab.queryParams) ? activeTab.queryParams : []).filter(p => !!p.key).length > 0 && (
+                  <span className="ml-1 text-[10px] bg-primary/20 text-primary px-1.5 rounded-full">
+                    {(Array.isArray(activeTab.queryParams) ? activeTab.queryParams : []).filter(p => !!p.key).length}
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="headers">
+              <TabsTrigger value="headers" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1">
                 Headers
-                {headers.filter(h => h.key).length > 0 && (
-                  <span className="ml-1 text-xs bg-primary/20 px-1.5 rounded-full">
-                    {headers.filter(h => h.key).length}
+                {(Array.isArray(activeTab.headers) ? activeTab.headers : []).filter(h => !!h.key).length > 0 && (
+                  <span className="ml-1 text-[10px] bg-primary/20 text-primary px-1.5 rounded-full">
+                    {(Array.isArray(activeTab.headers) ? activeTab.headers : []).filter(h => !!h.key).length}
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="body">Body</TabsTrigger>
+              <TabsTrigger value="body" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1">Body</TabsTrigger>
             </TabsList>
           </div>
 
           <div className="flex-1 overflow-auto">
-            <TabsContent value="params" className="p-4 h-full">
+            <TabsContent value="params" className="p-4 h-full m-0 border-0 outline-none">
               <ParamsEditor />
             </TabsContent>
-            <TabsContent value="headers" className="p-4 h-full">
+            <TabsContent value="headers" className="p-4 h-full m-0 border-0 outline-none">
               <HeadersEditor />
             </TabsContent>
-            <TabsContent value="body" className="p-4 h-full">
+            <TabsContent value="body" className="p-4 h-full m-0 border-0 outline-none">
               <BodyEditor />
             </TabsContent>
           </div>

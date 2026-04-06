@@ -12,12 +12,18 @@ const BODY_TYPES: { value: BodyType; label: string }[] = [
 ];
 
 export function BodyEditor() {
-  const { body, bodyType, method, setBody, setBodyType } = useRequestStore();
+  const { getActiveTab, updateActiveTab } = useRequestStore();
+  const activeTab = getActiveTab();
+
+  if (!activeTab) return null;
+
+  const { body, bodyType, method } = activeTab;
 
   if (method === 'GET') {
     return (
-      <div className="flex items-center justify-center h-32 text-muted-foreground">
-        GET requests cannot have a body
+      <div className="flex flex-col items-center justify-center h-48 text-muted-foreground bg-muted/5 rounded-xl border-2 border-dashed border-border m-4">
+        <p className="text-sm font-medium">GET requests cannot have a request body.</p>
+        <p className="text-xs mt-1">Try switching the method to POST or PUT.</p>
       </div>
     );
   }
@@ -25,16 +31,16 @@ export function BodyEditor() {
   return (
     <div className="space-y-4">
       {/* Body type selector */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 p-1 bg-muted/30 rounded-lg w-fit">
         {BODY_TYPES.map((type) => (
           <button
             key={type.value}
-            onClick={() => setBodyType(type.value)}
+            onClick={() => updateActiveTab({ bodyType: type.value })}
             className={cn(
-              'px-3 py-1.5 text-sm rounded-md transition-colors',
+              'px-4 py-1.5 text-xs font-semibold rounded-md transition-all',
               bodyType === type.value
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted hover:bg-muted/80'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
             )}
           >
             {type.label}
@@ -46,7 +52,7 @@ export function BodyEditor() {
       {bodyType !== 'none' && (
         <textarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={(e) => updateActiveTab({ body: e.target.value })}
           placeholder={
             bodyType === 'json'
               ? `{\n  "key": "value"\n}`
@@ -55,9 +61,9 @@ export function BodyEditor() {
               : 'Enter raw body content'
           }
           className={cn(
-            'w-full h-64 p-4 rounded-md border border-input bg-background',
-            'font-mono text-sm resize-none',
-            'focus:outline-none focus:ring-2 focus:ring-ring'
+            'w-full h-80 p-4 rounded-xl border border-border bg-muted/5',
+            'font-mono text-xs resize-none transition-all',
+            'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-background'
           )}
         />
       )}

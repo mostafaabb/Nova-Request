@@ -1,143 +1,214 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { HttpMethod, KeyValuePair, BodyType, ApiResponse } from '@/types';
 import { proxyApi } from '@/lib/api';
+import { useEnvironmentStore } from './environmentStore';
+import toast from 'react-hot-toast';
 
-interface RequestState {
-  // Current request
+export interface Tab {
+  id: string;
+  name: string;
   method: HttpMethod;
   url: string;
   headers: KeyValuePair[];
   queryParams: KeyValuePair[];
   body: string;
   bodyType: BodyType;
-  
-  // Response
   response: ApiResponse | null;
   isLoading: boolean;
-  
-  // Actions
-  setMethod: (method: HttpMethod) => void;
-  setUrl: (url: string) => void;
-  setHeaders: (headers: KeyValuePair[]) => void;
-  setQueryParams: (params: KeyValuePair[]) => void;
-  setBody: (body: string) => void;
-  setBodyType: (type: BodyType) => void;
-  addHeader: () => void;
-  removeHeader: (index: number) => void;
-  updateHeader: (index: number, field: 'key' | 'value' | 'enabled', value: string | boolean) => void;
-  addQueryParam: () => void;
-  removeQueryParam: (index: number) => void;
-  updateQueryParam: (index: number, field: 'key' | 'value' | 'enabled', value: string | boolean) => void;
-  sendRequest: (endpointId?: string) => Promise<void>;
-  clearResponse: () => void;
-  loadEndpoint: (endpoint: any) => void;
-  reset: () => void;
+  isDirty?: boolean;
 }
 
-const initialState = {
-  method: 'GET' as HttpMethod,
+interface RequestState {
+  tabs: Tab[];
+  activeTabId: string | null;
+  
+  // Tab Management
+  addTab: (endpoint?: any) => void;
+  removeTab: (id: string) => void;
+  setActiveTab: (id: string) => void;
+  updateActiveTab: (updates: Partial<Tab>) => void;
+  
+  // Core Actions
+  sendRequest: (endpointId?: string) => Promise<void>;
+  
+  // Helpers
+  getActiveTab: () => Tab | null;
+}
+
+const DEFAULT_TAB: Omit<Tab, 'id'> = {
+  name: 'New Request',
+  method: 'GET',
   url: '',
   headers: [{ key: '', value: '', enabled: true }],
   queryParams: [{ key: '', value: '', enabled: true }],
   body: '',
-  bodyType: 'json' as BodyType,
+  bodyType: 'json',
   response: null,
   isLoading: false,
 };
 
-export const useRequestStore = create<RequestState>((set, get) => ({
-  ...initialState,
+const ensureArray = (val: any) => Array.isArray(val) ? val : [{ key: '', value: '', enabled: true }];
 
-  setMethod: (method) => set({ method }),
-  setUrl: (url) => set({ url }),
-  setHeaders: (headers) => set({ headers }),
-  setQueryParams: (queryParams) => set({ queryParams }),
-  setBody: (body) => set({ body }),
-  setBodyType: (bodyType) => set({ bodyType }),
+const validateTab = (tab: any): Tab => ({
+  id: tab.id || Math.random().toString(36).substr(2, 9),
+  name: tab.name || 'New Request',
+  method: (tab.method as HttpMethod) || 'GET',
+  url: tab.url || '',
+  headers: ensureArray(tab.headers),
+  queryParams: ensureArray(tab.queryParams),
+  body: tab.body || '',
+  bodyType: (tab.bodyType as BodyType) || 'json',
+  response: tab.response ?? null,
+  isLoading: tab.isLoading ?? false,
+  isDirty: tab.isDirty || false,
+});
 
-  addHeader: () => set((state) => ({
-    headers: [...state.headers, { key: '', value: '', enabled: true }]
-  })),
+export const useRequestStore = create<RequestState>()(
+  persist(
+    (set, get) => ({
+      tabs: [],
+      activeTabId: null,
 
-  removeHeader: (index) => set((state) => ({
-    headers: state.headers.filter((_, i) => i !== index)
-  })),
+      getActiveTab: () => {
+        const { tabs, activeTabId } = get();
+        const tab = tabs.find(t => t.id === activeTabId);
+        return tab ? validateTab(tab) : null;
+      },
 
-  updateHeader: (index, field, value) => set((state) => ({
-    headers: state.headers.map((h, i) => 
-      i === index ? { ...h, [field]: value } : h
-    )
-  })),
+      addTab: (endpoint) => {
+        set((state) => {
+          const id = Math.random().toString(36).substr(2, 9);
+          const newTab = validateTab(endpoint ? { ...endpoint, id } : { ...DEFAULT_TAB, id });
+          
+          return {
+            tabs: [...state.tabs, newTab],
+            activeTabId: id,
+          };
+        });
+      },
 
-  addQueryParam: () => set((state) => ({
-    queryParams: [...state.queryParams, { key: '', value: '', enabled: true }]
-  })),
+      removeTab: (id) => {
+        set((state) => {
+          const newTabs = state.tabs.filter(t => t.id !== id);
+          let newActiveTabId = state.activeTabId;
 
-  removeQueryParam: (index) => set((state) => ({
-    queryParams: state.queryParams.filter((_, i) => i !== index)
-  })),
+          if (state.activeTabId === id) {
+            newActiveTabId = newTabs.length > 0 ? newTabs[newTabs.length - 1].id : null;
+          }
 
-  updateQueryParam: (index, field, value) => set((state) => ({
-    queryParams: state.queryParams.map((p, i) => 
-      i === index ? { ...p, [field]: value } : p
-    )
-  })),
+          return {
+            tabs: newTabs,
+            activeTabId: newActiveTabId,
+          };
+        });
+      },
 
-  sendRequest: async (endpointId) => {
-    const state = get();
-    set({ isLoading: true, response: null });
+      setActiveTab: (id) => set({ activeTabId: id }),
 
-    try {
-      // Build URL with query params
-      let finalUrl = state.url;
-      const enabledParams = state.queryParams.filter(p => p.enabled && p.key);
-      if (enabledParams.length > 0) {
-        const searchParams = new URLSearchParams();
-        enabledParams.forEach(p => searchParams.append(p.key, p.value));
-        finalUrl += (finalUrl.includes('?') ? '&' : '?') + searchParams.toString();
-      }
+      updateActiveTab: (updates) => {
+        set((state) => ({
+          tabs: state.tabs.map(t => 
+            t.id === state.activeTabId ? validateTab({ ...t, ...updates, isDirty: true }) : t
+          ),
+        }));
+      },
 
-      // Filter enabled headers
-      const enabledHeaders = state.headers.filter(h => h.enabled && h.key);
+      sendRequest: async (endpointId) => {
+        const activeTab = get().getActiveTab();
+        const targetTabId = get().activeTabId;
+        
+        if (!activeTab || !targetTabId) return;
 
-      // Send via proxy
-      const response = await proxyApi.execute({
-        method: state.method,
-        url: finalUrl,
-        headers: enabledHeaders,
-        body: state.method !== 'GET' ? state.body : undefined,
-        endpointId,
-      });
+        if (!activeTab.url || activeTab.url.trim() === '') {
+          toast.error('Please enter a URL');
+          return;
+        }
 
-      set({ response: response.data, isLoading: false });
-    } catch (error: any) {
-      set({
-        response: {
-          success: false,
-          error: {
-            message: error.response?.data?.error || error.message || 'Request failed',
-          },
-        },
-        isLoading: false,
-      });
+        const variables = useEnvironmentStore.getState().getVariables();
+
+        // Variable Replacement Helper
+        const replaceVariables = (str: string) => {
+          if (!str) return '';
+          return str.replace(/\{\{(.*?)\}\}/g, (_, key) => variables[key.trim()] || `{{${key}}}`);
+        };
+
+        set((state) => ({
+          tabs: state.tabs.map(t => 
+            t.id === targetTabId ? { ...t, isLoading: true, response: null } : t
+          ),
+        }));
+
+        try {
+          const startTime = Date.now();
+          
+          // Build URL with query params & variables
+          let finalUrl = replaceVariables(activeTab.url);
+          const enabledParams = (activeTab.queryParams || []).filter(p => !!p.enabled && !!p.key);
+          if (enabledParams.length > 0) {
+            try {
+              const searchParams = new URLSearchParams();
+              enabledParams.forEach(p => searchParams.append(replaceVariables(p.key), replaceVariables(p.value)));
+              finalUrl += (finalUrl.includes('?') ? '&' : '?') + searchParams.toString();
+            } catch (err) {
+              console.error('URL SearchParams Error:', err);
+            }
+          }
+
+          // Filter enabled headers & replace variables
+          const enabledHeaders = (activeTab.headers || [])
+            .filter(h => !!h.enabled && !!h.key)
+            .map(h => ({
+              key: replaceVariables(h.key),
+              value: replaceVariables(h.value),
+              enabled: true
+            }));
+
+          const response = await proxyApi.execute({
+            method: activeTab.method,
+            url: finalUrl,
+            headers: enabledHeaders,
+            body: activeTab.method !== 'GET' ? replaceVariables(activeTab.body) : undefined,
+            endpointId,
+          });
+
+          const responseTime = Date.now() - startTime;
+
+          set((state) => ({
+            tabs: state.tabs.map(t => 
+              t.id === targetTabId ? { 
+                ...t, 
+                isLoading: false, 
+                response: { ...response.data, responseTime } 
+              } : t
+            ),
+          }));
+        } catch (error: any) {
+          console.error('Nova Request Error:', error);
+          set((state) => ({
+            tabs: state.tabs.map(t => 
+              t.id === targetTabId ? { 
+                ...t, 
+                isLoading: false, 
+                response: {
+                  success: false,
+                  error: { 
+                    message: error.response?.data?.error || error.message || 'Connection failed' 
+                  },
+                }
+              } : t
+            ),
+          }));
+          toast.error(error.message || 'Request failed');
+        }
+      },
+    }),
+    {
+      name: 'nova-requests',
+      partialize: (state) => ({
+        tabs: state.tabs.map(({ response, isLoading, ...rest }) => rest),
+        activeTabId: state.activeTabId,
+      }),
     }
-  },
-
-  clearResponse: () => set({ response: null }),
-
-  loadEndpoint: (endpoint) => set({
-    method: endpoint.method || 'GET',
-    url: endpoint.url || '',
-    headers: endpoint.headers?.length > 0 
-      ? endpoint.headers 
-      : [{ key: '', value: '', enabled: true }],
-    queryParams: endpoint.queryParams?.length > 0 
-      ? endpoint.queryParams 
-      : [{ key: '', value: '', enabled: true }],
-    body: endpoint.body || '',
-    bodyType: endpoint.bodyType || 'json',
-    response: null,
-  }),
-
-  reset: () => set(initialState),
-}));
+  )
+);

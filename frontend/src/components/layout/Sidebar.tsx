@@ -46,7 +46,7 @@ export function Sidebar() {
     duplicateEndpoint,
     generateShareLink,
   } = useCollectionStore();
-  const { loadEndpoint } = useRequestStore();
+  const { tabs, setActiveTab, addTab } = useRequestStore();
 
   const [search, setSearch] = useState('');
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set());
@@ -96,7 +96,13 @@ export function Sidebar() {
 
   const handleSelectEndpoint = (endpoint: any) => {
     selectEndpoint(endpoint);
-    loadEndpoint(endpoint);
+    // Find if a tab is already open for this endpoint
+    const existingTab = tabs.find(t => t.name === endpoint.name && t.url === endpoint.url);
+    if (existingTab) {
+      setActiveTab(existingTab.id);
+    } else {
+      addTab(endpoint);
+    }
   };
 
   const handleShareCollection = async (id: string) => {
