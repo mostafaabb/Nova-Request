@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from '@/types';
 import { authApi } from '@/lib/api';
+import { useWorkspaceStore } from './workspaceStore';
 
 interface AuthState {
   user: User | null;
@@ -28,6 +29,7 @@ export const useAuthStore = create<AuthState>()(
         
         localStorage.setItem('token', token);
         set({ user, token, isAuthenticated: true });
+        await useWorkspaceStore.getState().fetchWorkspaces(user?.defaultWorkspaceId);
       },
 
       register: async (email: string, password: string, name: string) => {
@@ -36,10 +38,13 @@ export const useAuthStore = create<AuthState>()(
         
         localStorage.setItem('token', token);
         set({ user, token, isAuthenticated: true });
+        await useWorkspaceStore.getState().fetchWorkspaces(user?.defaultWorkspaceId);
       },
 
       logout: () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('nova-active-workspace');
+        useWorkspaceStore.getState().setActiveWorkspace(null);
         set({ user: null, token: null, isAuthenticated: false });
       },
 
@@ -52,12 +57,14 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const response = await authApi.me();
+          const user = response.data.user;
           set({ 
-            user: response.data.user, 
+            user, 
             token, 
             isAuthenticated: true, 
             isLoading: false 
           });
+          await useWorkspaceStore.getState().fetchWorkspaces(user?.defaultWorkspaceId);
         } catch {
           localStorage.removeItem('token');
           set({ 

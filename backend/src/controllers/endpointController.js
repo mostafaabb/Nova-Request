@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { parseJsonFields } = require('../utils/prisma-helpers');
+const { logAudit } = require('../utils/audit');
 
 exports.getAll = async (req, res, next) => {
   try {
@@ -8,7 +9,13 @@ exports.getAll = async (req, res, next) => {
 
     // Check collection ownership
     const collection = await prisma.collection.findFirst({
-      where: { id: collectionId, userId: req.userId }
+      where: {
+        id: collectionId,
+        OR: [
+          { workspaceId: req.workspaceId },
+          { workspaceId: null, userId: req.userId }
+        ]
+      }
     });
 
     if (!collection) {
@@ -34,12 +41,13 @@ exports.getOne = async (req, res, next) => {
       where: { id },
       include: {
         collection: {
-          select: { userId: true }
+          select: { userId: true, workspaceId: true }
         }
       }
     });
 
-    if (!endpoint || endpoint.collection.userId !== req.userId) {
+    if (!endpoint || (!endpoint.collection.workspaceId && endpoint.collection.userId !== req.userId)
+      || (endpoint.collection.workspaceId && endpoint.collection.workspaceId !== req.workspaceId)) {
       return res.status(404).json({ error: 'Endpoint not found' });
     }
 
@@ -56,7 +64,13 @@ exports.create = async (req, res, next) => {
 
     // Check collection ownership
     const collection = await prisma.collection.findFirst({
-      where: { id: collectionId, userId: req.userId }
+      where: {
+        id: collectionId,
+        OR: [
+          { workspaceId: req.workspaceId },
+          { workspaceId: null, userId: req.userId }
+        ]
+      }
     });
 
     if (!collection) {
@@ -85,6 +99,15 @@ exports.create = async (req, res, next) => {
       }
     });
 
+    await logAudit({
+      workspaceId: collection.workspaceId || req.workspaceId,
+      actorId: req.userId,
+      action: 'endpoint.created',
+      entityType: 'endpoint',
+      entityId: endpoint.id,
+      metadata: { name: endpoint.name, method: endpoint.method }
+    });
+
     res.status(201).json({ endpoint: parseJsonFields(endpoint) });
   } catch (error) {
     next(error);
@@ -100,11 +123,12 @@ exports.update = async (req, res, next) => {
     const existing = await prisma.endpoint.findUnique({
       where: { id },
       include: {
-        collection: { select: { userId: true } }
+        collection: { select: { userId: true, workspaceId: true } }
       }
     });
 
-    if (!existing || existing.collection.userId !== req.userId) {
+    if (!existing || (!existing.collection.workspaceId && existing.collection.userId !== req.userId)
+      || (existing.collection.workspaceId && existing.collection.workspaceId !== req.workspaceId)) {
       return res.status(404).json({ error: 'Endpoint not found' });
     }
 
@@ -124,6 +148,15 @@ exports.update = async (req, res, next) => {
       }
     });
 
+    await logAudit({
+      workspaceId: existing.collection.workspaceId || req.workspaceId,
+      actorId: req.userId,
+      action: 'endpoint.updated',
+      entityType: 'endpoint',
+      entityId: endpoint.id,
+      metadata: { name: endpoint.name, method: endpoint.method }
+    });
+
     res.json({ endpoint: parseJsonFields(endpoint) });
   } catch (error) {
     next(error);
@@ -138,15 +171,25 @@ exports.delete = async (req, res, next) => {
     const existing = await prisma.endpoint.findUnique({
       where: { id },
       include: {
-        collection: { select: { userId: true } }
+        collection: { select: { userId: true, workspaceId: true } }
       }
     });
 
-    if (!existing || existing.collection.userId !== req.userId) {
+    if (!existing || (!existing.collection.workspaceId && existing.collection.userId !== req.userId)
+      || (existing.collection.workspaceId && existing.collection.workspaceId !== req.workspaceId)) {
       return res.status(404).json({ error: 'Endpoint not found' });
     }
 
     await prisma.endpoint.delete({ where: { id } });
+
+    await logAudit({
+      workspaceId: existing.collection.workspaceId || req.workspaceId,
+      actorId: req.userId,
+      action: 'endpoint.deleted',
+      entityType: 'endpoint',
+      entityId: id,
+      metadata: { name: existing.name, method: existing.method }
+    });
 
     res.json({ message: 'Endpoint deleted' });
   } catch (error) {
@@ -162,11 +205,12 @@ exports.duplicate = async (req, res, next) => {
     const original = await prisma.endpoint.findUnique({
       where: { id },
       include: {
-        collection: { select: { userId: true } }
+        collection: { select: { userId: true, workspaceId: true } }
       }
     });
 
-    if (!original || original.collection.userId !== req.userId) {
+    if (!original || (!original.collection.workspaceId && original.collection.userId !== req.userId)
+      || (original.collection.workspaceId && original.collection.workspaceId !== req.workspaceId)) {
       return res.status(404).json({ error: 'Endpoint not found' });
     }
 
@@ -191,6 +235,15 @@ exports.duplicate = async (req, res, next) => {
         tags: original.tags,
         order: (maxOrder._max.order || 0) + 1
       }
+    });
+
+    await logAudit({
+      workspaceId: original.collection.workspaceId || req.workspaceId,
+      actorId: req.userId,
+      action: 'endpoint.duplicated',
+      entityType: 'endpoint',
+      entityId: duplicate.id,
+      metadata: { name: duplicate.name, method: duplicate.method }
     });
 
     res.status(201).json({ endpoint: parseJsonFields(duplicate) });

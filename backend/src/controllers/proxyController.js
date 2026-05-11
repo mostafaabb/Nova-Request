@@ -10,13 +10,25 @@ exports.executeRequest = async (req, res, next) => {
       return res.status(400).json({ error: 'URL is required' });
     }
 
+    const normalizedMethod = (method || 'GET').toUpperCase();
+    const allowedMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+    if (!allowedMethods.includes(normalizedMethod)) {
+      return res.status(400).json({ error: 'Invalid HTTP method' });
+    }
+
+    const numericTimeout = Number(timeout);
+    if (Number.isNaN(numericTimeout)) {
+      return res.status(400).json({ error: 'Invalid timeout value' });
+    }
+    const clampedTimeout = Math.min(Math.max(numericTimeout, 1000), 60000);
+
     const startTime = Date.now();
 
     // Build request config
     const config = {
-      method: method || 'GET',
+      method: normalizedMethod,
       url,
-      timeout,
+      timeout: clampedTimeout,
       validateStatus: () => true, // Don't throw on any status
       headers: {}
     };
@@ -31,7 +43,7 @@ exports.executeRequest = async (req, res, next) => {
     }
 
     // Add body for non-GET requests
-    if (body && method !== 'GET') {
+    if (body && normalizedMethod !== 'GET') {
       config.data = body;
       
       // Set Content-Type if not already set
@@ -76,6 +88,7 @@ exports.executeRequest = async (req, res, next) => {
         await prisma.requestHistory.create({
           data: {
             userId: req.userId,
+            workspaceId: req.workspaceId || null,
             endpointId: endpointId || null,
             method: config.method,
             url,

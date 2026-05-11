@@ -2,6 +2,7 @@
 
 import { useTheme } from '@/components/ThemeProvider';
 import { useEnvironmentStore } from '@/store/environmentStore';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
@@ -16,10 +17,12 @@ import {
   Plus,
   Trash2,
   X,
-  Zap
+  Zap,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 export function Header() {
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -33,11 +36,60 @@ export function Header() {
     addVariable,
     removeVariable
   } = useEnvironmentStore();
+  const {
+    workspaces,
+    activeWorkspaceId,
+    setActiveWorkspace,
+    createWorkspace,
+    fetchMembers,
+    members,
+    inviteMember,
+    updateMemberRole,
+    removeMember,
+    isMembersLoading
+  } = useWorkspaceStore();
 
   const [showEnvModal, setShowEnvModal] = useState(false);
+  const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
   const [newEnvName, setNewEnvName] = useState('');
+  const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'owner' | 'admin' | 'member'>('member');
 
   const activeEnv = environments.find(e => e.id === activeEnvironmentId) || environments.find(e => e.id === 'globals');
+  const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId) || workspaces[0];
+  const activeWorkspaceIdSafe = activeWorkspace?.id || null;
+  const canManageMembers = activeWorkspace?.role === 'owner' || activeWorkspace?.role === 'admin';
+
+  useEffect(() => {
+    if (showWorkspaceModal && activeWorkspaceIdSafe) {
+      fetchMembers(activeWorkspaceIdSafe).catch(() => {
+        toast.error('Failed to load workspace members');
+      });
+    }
+  }, [showWorkspaceModal, activeWorkspaceIdSafe, fetchMembers]);
+
+  const handleCreateWorkspace = async () => {
+    if (!newWorkspaceName.trim()) return;
+    try {
+      await createWorkspace(newWorkspaceName.trim());
+      setNewWorkspaceName('');
+      toast.success('Workspace created');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to create workspace');
+    }
+  };
+
+  const handleInviteMember = async () => {
+    if (!activeWorkspaceIdSafe || !inviteEmail.trim()) return;
+    try {
+      await inviteMember(activeWorkspaceIdSafe, inviteEmail.trim(), inviteRole);
+      setInviteEmail('');
+      toast.success('Member invited');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to invite member');
+    }
+  };
 
   return (
     <header className="h-14 border-b border-border flex items-center px-6 justify-between bg-background/80 backdrop-blur-md sticky top-0 z-50">
@@ -48,6 +100,35 @@ export function Header() {
           </div>
           Nova Request
         </Link>
+        <div className="h-6 w-px bg-border hidden sm:block" />
+        <div className="flex items-center gap-2">
+          <Users className="h-3.5 w-3.5 text-muted-foreground" />
+          <Select
+            value={activeWorkspace?.id || ''}
+            onChange={(e) => setActiveWorkspace(e.target.value)}
+            className="w-48 h-8 text-[11px] font-bold bg-muted/50 border-none shadow-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
+            disabled={workspaces.length === 0}
+          >
+            {workspaces.length === 0 ? (
+              <option value="">No workspace</option>
+            ) : (
+              workspaces.map((workspace) => (
+                <option key={workspace.id} value={workspace.id}>
+                  {workspace.name} · {workspace.role}
+                </option>
+              ))
+            )}
+          </Select>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 hover:bg-primary/10"
+            onClick={() => setShowWorkspaceModal(true)}
+            title="Manage workspace"
+          >
+            <Users className="h-4 w-4" />
+          </Button>
+        </div>
         <div className="h-6 w-px bg-border hidden sm:block" />
         <div className="flex items-center gap-2">
           <Globe className="h-3.5 w-3.5 text-muted-foreground" />
@@ -88,6 +169,156 @@ export function Header() {
           )}
         </Button>
       </div>
+
+      {/* Workspace Manager Modal */}
+      <Modal
+        isOpen={showWorkspaceModal}
+        onClose={() => setShowWorkspaceModal(false)}
+        title="Workspace Manager"
+        className="max-w-5xl"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-[1.1fr_1.9fr] gap-6 mt-4">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-border bg-muted/20 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-sm">Workspaces</h3>
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  {workspaces.length} total
+                </span>
+              </div>
+              <div className="space-y-1">
+                {workspaces.map((workspace) => (
+                  <button
+                    key={workspace.id}
+                    onClick={() => setActiveWorkspace(workspace.id)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all',
+                      workspace.id === activeWorkspace?.id
+                        ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                        : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="truncate">{workspace.name}</span>
+                      <span className="text-[10px] uppercase">{workspace.role}</span>
+                    </div>
+                  </button>
+                ))}
+                {workspaces.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No workspaces yet</p>
+                )}
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Input
+                  placeholder="New workspace name"
+                  value={newWorkspaceName}
+                  onChange={(e) => setNewWorkspaceName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateWorkspace()}
+                  className="h-9 text-xs"
+                />
+                <Button size="icon" className="h-9 w-9" onClick={handleCreateWorkspace}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-xl tracking-tight">{activeWorkspace?.name || 'Workspace'}</h3>
+                <p className="text-xs text-muted-foreground">
+                  Role: {activeWorkspace?.role || 'member'}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-background p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Input
+                  placeholder="Invite by email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="h-9 text-xs"
+                  disabled={!canManageMembers}
+                />
+                <Select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as 'owner' | 'admin' | 'member')}
+                  className="h-9 text-xs w-32"
+                  disabled={!canManageMembers}
+                >
+                  <option value="member">Member</option>
+                  <option value="admin">Admin</option>
+                  <option value="owner">Owner</option>
+                </Select>
+                <Button
+                  className="h-9"
+                  onClick={handleInviteMember}
+                  disabled={!canManageMembers || !inviteEmail.trim()}
+                >
+                  Invite
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {isMembersLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : members.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No members yet</p>
+                ) : (
+                  members.map((member) => (
+                    <div key={member.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                      <div>
+                        <p className="text-sm font-semibold">{member.user.name}</p>
+                        <p className="text-xs text-muted-foreground">{member.user.email}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={member.role}
+                          onChange={async (e) => {
+                            try {
+                              await updateMemberRole(activeWorkspace!.id, member.id, e.target.value as 'owner' | 'admin' | 'member');
+                              toast.success('Role updated');
+                            } catch (error: any) {
+                              toast.error(error.response?.data?.error || 'Failed to update role');
+                            }
+                          }}
+                          className="h-8 text-xs w-28"
+                          disabled={!canManageMembers}
+                        >
+                          <option value="member">Member</option>
+                          <option value="admin">Admin</option>
+                          <option value="owner">Owner</option>
+                        </Select>
+                        {canManageMembers && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={async () => {
+                              try {
+                                await removeMember(activeWorkspace!.id, member.id);
+                                toast.success('Member removed');
+                              } catch (error: any) {
+                                toast.error(error.response?.data?.error || 'Failed to remove member');
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
 
       {/* Environment Manager Modal */}
       <Modal

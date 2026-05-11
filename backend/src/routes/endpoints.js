@@ -3,10 +3,12 @@ const { body } = require('express-validator');
 const router = express.Router();
 const endpointController = require('../controllers/endpointController');
 const { authenticate } = require('../middleware/auth');
+const { requireWorkspace } = require('../middleware/workspace');
 const { validate } = require('../middleware/validate');
 
 // All routes require authentication
 router.use(authenticate);
+router.use(requireWorkspace);
 
 // Get all endpoints for a collection
 router.get('/collection/:collectionId', endpointController.getAll);

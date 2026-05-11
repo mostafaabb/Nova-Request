@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -14,18 +14,74 @@ model User {
   email        String         @unique
   password     String
   name         String
+  defaultWorkspaceId String?  @map("default_workspace_id")
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @updatedAt @map("updated_at")
   
   collections  Collection[]
   history      RequestHistory[]
+  memberships  WorkspaceMember[]
+  createdWorkspaces Workspace[] @relation("WorkspaceCreatedBy")
+  auditLogs    AuditLog[]
+  defaultWorkspace Workspace? @relation("DefaultWorkspace", fields: [defaultWorkspaceId], references: [id])
 
   @@map("users")
+}
+
+model Workspace {
+  id          String            @id @default(uuid())
+  name        String
+  createdById String            @map("created_by_id")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  createdBy   User              @relation("WorkspaceCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  defaultForUsers User[]        @relation("DefaultWorkspace")
+  members     WorkspaceMember[]
+  collections Collection[]
+  auditLogs   AuditLog[]
+
+  @@index([createdById])
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String     @id @default(uuid())
+  workspaceId String     @map("workspace_id")
+  userId      String     @map("user_id")
+  role        String     @default("member")
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+model AuditLog {
+  id          String     @id @default(uuid())
+  workspaceId String     @map("workspace_id")
+  actorId     String?    @map("actor_id")
+  action      String
+  entityType  String?    @map("entity_type")
+  entityId    String?    @map("entity_id")
+  metadata    String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor       User?      @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+  @@map("audit_logs")
 }
 
 model Collection {
   id          String     @id @default(uuid())
   userId      String     @map("user_id")
+  workspaceId String?    @map("workspace_id")
   name        String
   description String?
   shareId     String?    @unique @map("share_id")
@@ -34,9 +90,11 @@ model Collection {
   updatedAt   DateTime   @updatedAt @map("updated_at")
   
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
   endpoints   Endpoint[]
 
   @@index([userId])
+  @@index([workspaceId])
   @@index([shareId])
   @@map("collections")
 }
@@ -68,6 +126,7 @@ model RequestHistory {
   id              String   @id @default(uuid())
   userId          String   @map("user_id")
   endpointId      String?  @map("endpoint_id")
+  workspaceId     String?  @map("workspace_id")
   method          String
   url             String
   headers         String?
@@ -80,8 +139,10 @@ model RequestHistory {
   
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   endpoint        Endpoint? @relation(fields: [endpointId], references: [id], onDelete: SetNull)
+  workspace       Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([workspaceId])
   @@index([createdAt])
   @@map("request_history")
 }

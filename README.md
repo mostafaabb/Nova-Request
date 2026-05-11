@@ -156,27 +156,35 @@ Api-tester/
 - `GET /api/history` - Get request history
 - `DELETE /api/history` - Clear history
 
-## Deployment
+### Deployment
 
-### Frontend (Vercel)
+### Easiest Free Setup
 
-1. Push to GitHub
-2. Import in Vercel
-3. Set environment variables
-4. Deploy
+Use Vercel for the frontend, Render for the backend, and Neon for the database.
 
-### Backend (Render/Railway)
+1. Create a free Neon PostgreSQL database.
+2. Deploy the backend on Render using the Blueprint in [render.yaml](render.yaml).
+3. Deploy the frontend on Vercel from the repo root.
+4. Set `NEXT_PUBLIC_API_URL` in Vercel to your Render URL, for example `https://api-tester-backend.onrender.com/api`.
+5. Set `DATABASE_URL`, `JWT_SECRET`, and `FRONTEND_URL` in Render.
 
-1. Push to GitHub
-2. Create new Web Service
-3. Set environment variables
-4. Deploy
+### Render backend
 
-### Database (Supabase/Neon)
+Render is the easiest free host for this Express API.
 
-1. Create PostgreSQL database
-2. Copy connection string
-3. Update DATABASE_URL
+1. Connect your GitHub repo to Render.
+2. Let Render read [render.yaml](render.yaml).
+3. Add the secret environment variables when prompted.
+4. Deploy.
+
+### Free database
+
+Neon gives you a free PostgreSQL database that works with Prisma.
+
+1. Create a Neon project.
+2. Copy the connection string.
+3. Paste it into `DATABASE_URL` on Render.
+4. Run the deploy again if you need Prisma to create the tables.
 
 ## License
 

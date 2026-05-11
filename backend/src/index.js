@@ -10,6 +10,7 @@ const endpointRoutes = require('./routes/endpoints');
 const proxyRoutes = require('./routes/proxy');
 const historyRoutes = require('./routes/history');
 const shareRoutes = require('./routes/share');
+const workspaceRoutes = require('./routes/workspaces');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api/endpoints', endpointRoutes);
 app.use('/api/proxy', proxyRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/share', shareRoutes);
+app.use('/api/workspaces', workspaceRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

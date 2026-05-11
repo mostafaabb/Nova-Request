@@ -16,6 +16,11 @@ api.interceptors.request.use((config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    const workspaceId = localStorage.getItem('nova-active-workspace');
+    if (workspaceId) {
+      config.headers['X-Workspace-Id'] = workspaceId;
+    }
   }
   return config;
 });
@@ -98,6 +103,21 @@ export const historyApi = {
 // Share API (public)
 export const shareApi = {
   getCollection: (shareId: string) => api.get(`/share/${shareId}`),
+};
+
+// Workspace APIs
+export const workspaceApi = {
+  getAll: () => api.get('/workspaces'),
+  create: (data: { name: string }) => api.post('/workspaces', data),
+  getMembers: (workspaceId: string) => api.get(`/workspaces/${workspaceId}/members`),
+  addMember: (workspaceId: string, data: { email: string; role?: string }) =>
+    api.post(`/workspaces/${workspaceId}/members`, data),
+  updateMemberRole: (workspaceId: string, memberId: string, data: { role: string }) =>
+    api.patch(`/workspaces/${workspaceId}/members/${memberId}`, data),
+  removeMember: (workspaceId: string, memberId: string) =>
+    api.delete(`/workspaces/${workspaceId}/members/${memberId}`),
+  getAuditLogs: (workspaceId: string, params?: { limit?: number; offset?: number }) =>
+    api.get(`/workspaces/${workspaceId}/audit`, { params }),
 };
 
 export default api;
