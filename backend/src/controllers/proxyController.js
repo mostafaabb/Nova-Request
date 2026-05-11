@@ -1,10 +1,20 @@
 const axios = require('axios');
+const https = require('https');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 exports.executeRequest = async (req, res, next) => {
   try {
-    const { method, url, headers, body, timeout = 30000, saveToHistory = true, endpointId } = req.body;
+    const {
+      method,
+      url,
+      headers,
+      body,
+      timeout = 30000,
+      saveToHistory = true,
+      endpointId,
+      allowInsecure
+    } = req.body;
 
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
@@ -32,6 +42,10 @@ exports.executeRequest = async (req, res, next) => {
       validateStatus: () => true, // Don't throw on any status
       headers: {}
     };
+
+    if ((allowInsecure || process.env.ALLOW_INSECURE_TLS === 'true') && url.startsWith('https://')) {
+      config.httpsAgent = new https.Agent({ rejectUnauthorized: false });
+    }
 
     // Add headers
     if (headers && Array.isArray(headers)) {
