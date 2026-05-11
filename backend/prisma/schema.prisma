@@ -40,6 +40,7 @@ model Workspace {
   members     WorkspaceMember[]
   collections Collection[]
   auditLogs   AuditLog[]
+  requestHistory RequestHistory[]
 
   @@index([createdById])
   @@map("workspaces")
