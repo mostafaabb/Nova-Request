@@ -55,7 +55,7 @@ export function RequestBuilder() {
       toast.error('Please enter a URL');
       return;
     }
-    console.log('🚀 Sending request to:', activeTab.url);
+    console.log('Sending request to:', activeTab.url);
     sendRequest(currentEndpoint?.id);
   };
 
@@ -105,16 +105,17 @@ export function RequestBuilder() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background/75">
       {/* Tabs List */}
       <RequestTabs />
 
       {/* URL Bar */}
-      <div className="flex gap-2 p-4 border-b border-border shadow-sm">
+      <div className="p-4 border-b border-border/80 bg-background/70">
+        <div className="command-bar flex gap-2 rounded-lg p-2">
         <Select 
           value={activeTab.method} 
           onChange={(e) => updateActiveTab({ method: e.target.value as HttpMethod })}
-          className={cn('w-28 font-semibold transition-all', getMethodColor(activeTab.method))}
+          className={cn('w-28 h-11 font-black transition-all bg-background', getMethodColor(activeTab.method))}
         >
           {METHODS.map((m) => (
             <option key={m} value={m}>{m}</option>
@@ -125,11 +126,11 @@ export function RequestBuilder() {
           placeholder="Enter URL (e.g., https://api.example.com/users) or use {{variables}}"
           value={activeTab.url}
           onChange={(e) => updateActiveTab({ url: e.target.value })}
-          className="flex-1 font-mono text-sm bg-muted/20 focus:bg-background transition-colors"
+          className="flex-1 mono-soft text-sm bg-background focus:bg-background transition-colors h-11"
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
         />
 
-        <Button onClick={handleSend} disabled={activeTab.isLoading} className="shadow-sm">
+        <Button onClick={handleSend} disabled={activeTab.isLoading} className="h-11 px-5 font-bold">
           {activeTab.isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
           ) : (
@@ -138,18 +139,19 @@ export function RequestBuilder() {
           Send
         </Button>
 
-        <Button variant="outline" onClick={openSaveModal} disabled={!currentCollection} className="shadow-sm">
+        <Button variant="outline" onClick={openSaveModal} disabled={!currentCollection} className="h-11 font-bold">
           <Save className="h-4 w-4 mr-2" />
           Save
         </Button>
+        </div>
       </div>
 
       {/* Request Config Tabs */}
       <div className="flex-1 overflow-hidden">
         <Tabs defaultValue="params" className="h-full flex flex-col">
-          <div className="border-b border-border px-4 bg-muted/10">
-            <TabsList className="bg-transparent gap-4">
-              <TabsTrigger value="params" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1">
+          <div className="border-b border-border/80 px-4 bg-muted/20">
+            <TabsList className="bg-transparent gap-5">
+              <TabsTrigger value="params" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1 h-11 text-xs font-black uppercase tracking-wide">
                 Params
                 {(Array.isArray(activeTab.queryParams) ? activeTab.queryParams : []).filter(p => !!p.key).length > 0 && (
                   <span className="ml-1 text-[10px] bg-primary/20 text-primary px-1.5 rounded-full">
@@ -157,7 +159,7 @@ export function RequestBuilder() {
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="headers" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1">
+              <TabsTrigger value="headers" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1 h-11 text-xs font-black uppercase tracking-wide">
                 Headers
                 {(Array.isArray(activeTab.headers) ? activeTab.headers : []).filter(h => !!h.key).length > 0 && (
                   <span className="ml-1 text-[10px] bg-primary/20 text-primary px-1.5 rounded-full">
@@ -165,7 +167,7 @@ export function RequestBuilder() {
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="body" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1">Body</TabsTrigger>
+              <TabsTrigger value="body" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1 h-11 text-xs font-black uppercase tracking-wide">Body</TabsTrigger>
             </TabsList>
           </div>
 

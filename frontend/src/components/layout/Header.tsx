@@ -92,21 +92,21 @@ export function Header() {
   };
 
   return (
-    <header className="h-14 border-b border-border flex items-center px-6 justify-between bg-background/80 backdrop-blur-md sticky top-0 z-50">
-      <div className="flex items-center gap-8">
-        <Link href="/dashboard" className="flex items-center gap-2 font-extrabold text-xl tracking-tighter hover:text-primary transition-colors group">
-          <div className="p-1 bg-primary rounded-lg group-hover:rotate-12 transition-transform">
+    <header className="h-16 flex items-center px-3 sm:px-5 justify-between bg-background/70 backdrop-blur-xl sticky top-0 z-50">
+      <div className="flex items-center gap-3 lg:gap-6 min-w-0">
+        <Link href="/dashboard" className="flex items-center gap-2.5 font-extrabold text-lg tracking-tight hover:text-primary transition-colors group shrink-0">
+          <div className="p-1.5 bg-primary rounded-md shadow-sm shadow-primary/30 group-hover:rotate-6 transition-transform">
             <Zap className="h-5 w-5 text-primary-foreground fill-primary-foreground" />
           </div>
-          Nova Request
+          <span className="hidden sm:inline">Nova Request</span>
         </Link>
-        <div className="h-6 w-px bg-border hidden sm:block" />
-        <div className="flex items-center gap-2">
+        <div className="h-7 w-px bg-border hidden lg:block" />
+        <div className="hidden md:flex items-center gap-2 rounded-lg border border-border/80 bg-muted/40 px-2 py-1 shadow-sm">
           <Users className="h-3.5 w-3.5 text-muted-foreground" />
           <Select
             value={activeWorkspace?.id || ''}
             onChange={(e) => setActiveWorkspace(e.target.value)}
-            className="w-48 h-8 text-[11px] font-bold bg-muted/50 border-none shadow-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
+            className="w-44 lg:w-52 h-8 text-[11px] font-bold bg-transparent border-none shadow-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
             disabled={workspaces.length === 0}
           >
             {workspaces.length === 0 ? (
@@ -114,7 +114,7 @@ export function Header() {
             ) : (
               workspaces.map((workspace) => (
                 <option key={workspace.id} value={workspace.id}>
-                  {workspace.name} · {workspace.role}
+                  {workspace.name} - {workspace.role}
                 </option>
               ))
             )}
@@ -129,13 +129,13 @@ export function Header() {
             <Users className="h-4 w-4" />
           </Button>
         </div>
-        <div className="h-6 w-px bg-border hidden sm:block" />
-        <div className="flex items-center gap-2">
+        <div className="hidden xl:block h-7 w-px bg-border" />
+        <div className="hidden sm:flex items-center gap-2 rounded-lg border border-border/80 bg-muted/40 px-2 py-1 shadow-sm">
           <Globe className="h-3.5 w-3.5 text-muted-foreground" />
           <Select
             value={activeEnvironmentId || 'globals'}
             onChange={(e) => setActiveEnvironment(e.target.value === 'globals' ? null : e.target.value)}
-            className="w-40 h-8 text-[11px] font-bold bg-muted/50 border-none shadow-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
+            className="w-36 lg:w-44 h-8 text-[11px] font-bold bg-transparent border-none shadow-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
           >
             <option value="globals">No Environment</option>
             {environments.filter(e => e.id !== 'globals').map((env) => (
@@ -148,7 +148,7 @@ export function Header() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <Link href="/dashboard/history">
           <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10 transition-all active:scale-90" title="History">
             <History className="h-5 w-5" />

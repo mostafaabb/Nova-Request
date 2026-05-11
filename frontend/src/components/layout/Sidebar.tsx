@@ -143,29 +143,36 @@ export function Sidebar() {
   );
 
   return (
-    <div className="w-64 h-full border-r border-border bg-muted/30 flex flex-col">
+    <aside className="w-full h-full min-w-0 rounded-lg border border-border/80 bg-background/75 shadow-sm backdrop-blur flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <h1 className="text-lg font-bold">Nova Request</h1>
-        <p className="text-sm text-muted-foreground">{user?.email}</p>
+      <div className="p-4 border-b border-border/80 bg-muted/25">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground">Collections</h1>
+            <p className="text-xs text-muted-foreground truncate mt-1">{user?.email}</p>
+          </div>
+          <div className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">
+            API
+          </div>
+        </div>
       </div>
 
       {/* Search & Actions */}
-      <div className="p-2 border-b border-border space-y-2">
+      <div className="p-3 border-b border-border/80 space-y-3 bg-background/40">
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search..."
+            placeholder="Search collections..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 h-8"
+            className="pl-8 h-9 bg-muted/30"
           />
         </div>
         <div className="flex gap-1">
           <Button
             variant="ghost"
             size="sm"
-            className="flex-1"
+            className="flex-1 bg-primary/10 text-primary hover:bg-primary/20"
             onClick={() => setShowNewCollectionModal(true)}
           >
             <FolderPlus className="h-4 w-4 mr-1" />
@@ -182,9 +189,9 @@ export function Sidebar() {
       </div>
 
       {/* Collections List */}
-      <div className="flex-1 overflow-auto p-2">
+      <div className="flex-1 overflow-auto p-3">
         {filteredCollections.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8 text-sm">
+          <div className="text-center text-muted-foreground py-12 text-sm rounded-lg border border-dashed border-border bg-muted/20">
             No collections yet
           </div>
         ) : (
@@ -197,8 +204,8 @@ export function Sidebar() {
                 <div key={collection.id}>
                   <div
                     className={cn(
-                      'flex items-center gap-1 px-2 py-1.5 rounded-md cursor-pointer group',
-                      isActive ? 'bg-accent' : 'hover:bg-accent/50'
+                      'flex items-center gap-2 px-2.5 py-2 rounded-md cursor-pointer group transition-colors',
+                      isActive ? 'bg-accent text-accent-foreground shadow-sm' : 'hover:bg-accent/50'
                     )}
                   >
                     <button onClick={() => toggleCollection(collection.id)}>
@@ -214,12 +221,12 @@ export function Sidebar() {
                       <Folder className="h-4 w-4 text-muted-foreground" />
                     )}
                     <span
-                      className="flex-1 text-sm truncate"
+                      className="flex-1 text-sm font-semibold truncate"
                       onClick={() => toggleCollection(collection.id)}
                     >
                       {collection.name}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[10px] font-bold text-muted-foreground rounded-full bg-muted px-1.5 py-0.5">
                       {collection._count?.endpoints || 0}
                     </span>
                     <div className="opacity-0 group-hover:opacity-100 flex">
@@ -261,9 +268,9 @@ export function Sidebar() {
                           key={endpoint.id}
                           onClick={() => handleSelectEndpoint(endpoint)}
                           className={cn(
-                            'flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer text-sm group',
+                            'flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer text-sm group border border-transparent transition-colors',
                             currentEndpoint?.id === endpoint.id
-                              ? 'bg-primary/20'
+                              ? 'bg-primary/10 border-primary/20'
                               : 'hover:bg-accent/50'
                           )}
                         >
@@ -305,8 +312,8 @@ export function Sidebar() {
       </div>
 
       {/* Footer */}
-      <div className="p-2 border-t border-border">
-        <Button variant="ghost" size="sm" className="w-full" onClick={logout}>
+      <div className="p-3 border-t border-border/80 bg-muted/20">
+        <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground" onClick={logout}>
           Sign Out
         </Button>
       </div>
@@ -355,6 +362,6 @@ export function Sidebar() {
           </div>
         </div>
       </Modal>
-    </div>
+    </aside>
   );
 }

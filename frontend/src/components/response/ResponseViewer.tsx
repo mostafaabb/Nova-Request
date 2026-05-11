@@ -33,12 +33,12 @@ export function ResponseViewer() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-muted/5">
+      <div className="flex flex-col items-center justify-center h-full bg-muted/20">
         <div className="relative">
           <div className="h-16 w-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
           <Loader2 className="h-8 w-8 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
         </div>
-        <p className="mt-6 text-sm font-semibold animate-pulse">Requesting Data...</p>
+        <p className="mt-6 text-sm font-semibold animate-pulse">Requesting data...</p>
         <p className="text-xs text-muted-foreground mt-1">Nova-proxy is processing your request</p>
       </div>
     );
@@ -46,11 +46,13 @@ export function ResponseViewer() {
 
   if (!response) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-muted-foreground bg-muted/5 opacity-40">
-        <Server className="h-20 w-20 mb-6 stroke-[1.5]" />
+      <div className="flex flex-col items-center justify-center h-full text-muted-foreground bg-muted/20">
+        <div className="rounded-lg border border-dashed border-border bg-background/60 p-8 text-center shadow-sm">
+        <Server className="h-16 w-16 mb-5 stroke-[1.5] mx-auto text-primary/60" />
         <div className="text-center space-y-1">
-          <p className="text-sm font-bold">Ready to Send</p>
+          <p className="text-sm font-bold text-foreground">Ready to send</p>
           <p className="text-xs">Select a method and URL to begin testing</p>
+        </div>
         </div>
       </div>
     );
@@ -94,24 +96,24 @@ export function ResponseViewer() {
   }
 
   return (
-    <div className="h-full flex flex-col segment-transition">
+    <div className="h-full flex flex-col segment-transition bg-background/60">
       {/* Status bar */}
-      <div className="flex items-center gap-6 p-4 border-b border-border bg-muted/5">
+      <div className="flex items-center gap-4 xl:gap-6 p-4 border-b border-border/80 bg-background/70">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-bold uppercase text-muted-foreground">Status</span>
-          <span className={cn('text-sm font-extrabold px-2 py-0.5 rounded shadow-sm', getStatusColor(response.status!))}>
+          <span className={cn('text-sm font-extrabold px-2.5 py-1 rounded-md shadow-sm', getStatusColor(response.status!))}>
             {response.status} {response.statusText}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-bold uppercase text-muted-foreground">Time</span>
-          <span className="text-sm font-mono font-bold flex items-center gap-1.5">
+          <span className="text-sm mono-soft font-bold flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5 text-primary" />
             {formatResponseTime(response.responseTime!)}
           </span>
         </div>
         <div className="flex-1" />
-        <Button variant="outline" size="sm" onClick={handleCopy} className="h-8 gap-2 shadow-sm font-bold text-xs">
+        <Button variant="outline" size="sm" onClick={handleCopy} className="h-8 gap-2 font-bold text-xs">
           {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
           {copied ? 'Copied' : 'Copy JSON'}
         </Button>
@@ -119,7 +121,7 @@ export function ResponseViewer() {
 
       {/* Response tabs */}
       <Tabs defaultValue="body" className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="border-b border-border px-4 bg-muted/10 shrink-0">
+        <div className="border-b border-border/80 px-4 bg-muted/20 shrink-0">
           <TabsList className="bg-transparent gap-6">
             <TabsTrigger value="body" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1 h-10 font-bold text-xs uppercase">Body</TabsTrigger>
             <TabsTrigger value="headers" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1 h-10 font-bold text-xs uppercase">
@@ -134,9 +136,9 @@ export function ResponseViewer() {
           </TabsList>
         </div>
 
-        <div className="flex-1 min-h-0 bg-background/50 relative">
+        <div className="flex-1 min-h-0 bg-muted/10 relative">
           <TabsContent value="body" className="absolute inset-0 p-4 m-0 outline-none overflow-y-auto custom-scrollbar">
-            <div className="bg-background rounded-xl border border-border p-4 shadow-inner min-h-full">
+            <div className="bg-background rounded-lg border border-border/80 p-4 shadow-sm min-h-full">
               <JsonViewer data={response.data} />
             </div>
           </TabsContent>
@@ -144,7 +146,7 @@ export function ResponseViewer() {
           <TabsContent value="headers" className="absolute inset-0 p-4 m-0 outline-none overflow-y-auto custom-scrollbar">
             <div className="space-y-1.5">
               {response.headers && Object.entries(response.headers).map(([key, value]) => (
-                <div key={key} className="flex gap-4 p-2.5 rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors group">
+                <div key={key} className="flex gap-4 p-2.5 rounded-md border border-border/80 bg-background hover:bg-muted/50 transition-colors group">
                   <span className="text-xs font-mono font-bold text-primary min-w-[150px]">{key}</span>
                   <span className="text-xs font-mono text-muted-foreground break-all">{String(value)}</span>
                 </div>
@@ -153,7 +155,7 @@ export function ResponseViewer() {
           </TabsContent>
           
           <TabsContent value="raw" className="absolute inset-0 p-4 m-0 outline-none overflow-y-auto custom-scrollbar">
-            <div className="bg-muted min-h-full rounded-xl p-4 border border-border">
+            <div className="bg-muted/70 min-h-full rounded-lg p-4 border border-border/80">
               <pre className="font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-all text-muted-foreground">
                 {formatJson(response.data)}
               </pre>
