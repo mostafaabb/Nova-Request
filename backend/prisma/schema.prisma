@@ -41,6 +41,7 @@ model Workspace {
   collections Collection[]
   auditLogs   AuditLog[]
   requestHistory RequestHistory[]
+  environments Environment[]
 
   @@index([createdById])
   @@map("workspaces")
@@ -101,26 +102,44 @@ model Collection {
 }
 
 model Endpoint {
-  id           String     @id @default(uuid())
-  collectionId String     @map("collection_id")
-  name         String
-  description  String?
-  method       String     @default("GET")
-  url          String
-  headers      String?
-  queryParams  String?    @map("query_params")
-  body         String?
-  bodyType     String     @default("json") @map("body_type")
-  tags         String?
-  order        Int        @default(0)
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  
-  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  history      RequestHistory[]
+  id                    String     @id @default(uuid())
+  collectionId          String     @map("collection_id")
+  name                  String
+  description           String?
+  method                String     @default("GET")
+  url                   String
+  headers               String?
+  queryParams           String?    @map("query_params")
+  body                  String?
+  bodyType              String     @default("json") @map("body_type")
+  tags                  String?
+  order                 Int        @default(0)
+  preRequestScript      String?    @map("pre_request_script")
+  postRequestScript     String?    @map("post_request_script")
+  tests                 String?    // JSON array of test assertions
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
+
+  collection            Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  history               RequestHistory[]
 
   @@index([collectionId])
   @@map("endpoints")
+}
+
+model Environment {
+  id          String     @id @default(uuid())
+  workspaceId String     @map("workspace_id")
+  name        String
+  variables   String     // JSON object of key-value pairs
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+  @@map("environments")
 }
 
 model RequestHistory {
@@ -136,8 +155,9 @@ model RequestHistory {
   responseBody    String?  @map("response_body")
   responseHeaders String?  @map("response_headers")
   responseTime    Int?     @map("response_time")
+  testResults     String?  @map("test_results")  // JSON of test execution results
   createdAt       DateTime @default(now()) @map("created_at")
-  
+
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   endpoint        Endpoint? @relation(fields: [endpointId], references: [id], onDelete: SetNull)
   workspace       Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)

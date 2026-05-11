@@ -126,4 +126,16 @@ export const workspaceApi = {
     api.get(`/workspaces/${workspaceId}/audit`, { params }),
 };
 
-export default api;
+// Environment APIs
+export const environmentApi = {
+  getAll: (workspaceId: string) =>
+    api.get(`/workspaces/${workspaceId}/environments`),
+  getOne: (workspaceId: string, envId: string) =>
+    api.get(`/workspaces/${workspaceId}/environments/${envId}`),
+  create: (workspaceId: string, data: { name: string; variables?: Record<string, string> }) =>
+    api.post(`/workspaces/${workspaceId}/environments`, data),
+  update: (workspaceId: string, envId: string, data: { name?: string; variables?: Record<string, string> }) =>
+    api.put(`/workspaces/${workspaceId}/environments/${envId}`, data),
+  delete: (workspaceId: string, envId: string) =>
+    api.delete(`/workspaces/${workspaceId}/environments/${envId}`),
+};
