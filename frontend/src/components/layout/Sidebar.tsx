@@ -143,45 +143,47 @@ export function Sidebar() {
   );
 
   return (
-    <aside className="w-full h-full min-w-0 rounded-lg border border-border/80 bg-background/75 shadow-sm backdrop-blur flex flex-col overflow-hidden">
+    <aside className="w-full h-full min-w-0 rounded-lg border border-border/60 bg-background/80 shadow-sm backdrop-blur-sm flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-border/80 bg-muted/25">
+      <div className="p-4 border-b border-border/60 bg-muted/15">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground">Collections</h1>
-            <p className="text-xs text-muted-foreground truncate mt-1">{user?.email}</p>
+            <h1 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Collections</h1>
+            <p className="text-xs text-muted-foreground truncate mt-1.5">{user?.email}</p>
           </div>
-          <div className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">
+          <div className="rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary shrink-0">
             API
           </div>
         </div>
       </div>
 
       {/* Search & Actions */}
-      <div className="p-3 border-b border-border/80 space-y-3 bg-background/40">
+      <div className="px-4 py-3 border-b border-border/60 space-y-3 bg-background/50">
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search collections..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 h-9 bg-muted/30"
+            className="pl-9 h-9 bg-muted/30 text-sm"
           />
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-2">
           <Button
             variant="ghost"
             size="sm"
-            className="flex-1 bg-primary/10 text-primary hover:bg-primary/20"
+            className="flex-1 bg-primary/10 text-primary hover:bg-primary/20 font-semibold"
             onClick={() => setShowNewCollectionModal(true)}
           >
-            <FolderPlus className="h-4 w-4 mr-1" />
+            <FolderPlus className="h-4 w-4 mr-2" />
             New
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
+            className="font-semibold"
             onClick={() => setShowImportModal(true)}
+            title="Import collection"
           >
             <Upload className="h-4 w-4" />
           </Button>
@@ -189,13 +191,13 @@ export function Sidebar() {
       </div>
 
       {/* Collections List */}
-      <div className="flex-1 overflow-auto p-3">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 custom-scrollbar">
         {filteredCollections.length === 0 ? (
-          <div className="text-center text-muted-foreground py-12 text-sm rounded-lg border border-dashed border-border bg-muted/20">
+          <div className="text-center text-muted-foreground py-12 text-sm rounded-lg border border-dashed border-border/50 bg-muted/10">
             No collections yet
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {filteredCollections.map((collection) => {
               const isExpanded = expandedCollections.has(collection.id);
               const isActive = currentCollection?.id === collection.id;
@@ -204,21 +206,21 @@ export function Sidebar() {
                 <div key={collection.id}>
                   <div
                     className={cn(
-                      'flex items-center gap-2 px-2.5 py-2 rounded-md cursor-pointer group transition-colors',
-                      isActive ? 'bg-accent text-accent-foreground shadow-sm' : 'hover:bg-accent/50'
+                      'flex items-center gap-2.5 px-3 py-2.5 rounded-md cursor-pointer group transition-smooth',
+                      isActive ? 'bg-primary/15 text-primary shadow-sm border border-primary/20' : 'hover:bg-muted/40 border border-transparent'
                     )}
                   >
-                    <button onClick={() => toggleCollection(collection.id)}>
+                    <button onClick={() => toggleCollection(collection.id)} className="shrink-0">
                       {isExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       )}
                     </button>
                     {isExpanded ? (
-                      <FolderOpen className="h-4 w-4 text-primary" />
+                      <FolderOpen className="h-4 w-4 text-primary shrink-0" />
                     ) : (
-                      <Folder className="h-4 w-4 text-muted-foreground" />
+                      <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
                     )}
                     <span
                       className="flex-1 text-sm font-semibold truncate"
@@ -226,66 +228,70 @@ export function Sidebar() {
                     >
                       {collection.name}
                     </span>
-                    <span className="text-[10px] font-bold text-muted-foreground rounded-full bg-muted px-1.5 py-0.5">
+                    <span className="text-xs font-bold text-muted-foreground rounded-full bg-muted/50 px-2 py-0.5 shrink-0">
                       {collection._count?.endpoints || 0}
                     </span>
-                    <div className="opacity-0 group-hover:opacity-100 flex">
+                    <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleShareCollection(collection.id);
                         }}
-                        className="p-1 hover:bg-background rounded"
+                        className="p-1.5 hover:bg-primary/10 rounded text-muted-foreground hover:text-primary transition-smooth"
+                        title="Share"
                       >
-                        <Share2 className="h-3 w-3" />
+                        <Share2 className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleExportCollection(collection.id);
                         }}
-                        className="p-1 hover:bg-background rounded"
+                        className="p-1.5 hover:bg-primary/10 rounded text-muted-foreground hover:text-primary transition-smooth"
+                        title="Export"
                       >
-                        <Download className="h-3 w-3" />
+                        <Download className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteCollection(collection.id);
                         }}
-                        className="p-1 hover:bg-background rounded text-destructive"
+                        className="p-1.5 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive transition-smooth"
+                        title="Delete"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
 
                   {/* Endpoints */}
                   {isExpanded && currentCollection?.id === collection.id && (
-                    <div className="ml-6 mt-1 space-y-0.5">
+                    <div className="ml-4 mt-2 space-y-1">
                       {currentCollection.endpoints?.map((endpoint) => (
                         <div
                           key={endpoint.id}
                           onClick={() => handleSelectEndpoint(endpoint)}
                           className={cn(
-                            'flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer text-sm group border border-transparent transition-colors',
+                            'flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm group border transition-smooth',
                             currentEndpoint?.id === endpoint.id
-                              ? 'bg-primary/10 border-primary/20'
-                              : 'hover:bg-accent/50'
+                              ? 'bg-primary/15 border-primary/20 shadow-sm'
+                              : 'hover:bg-muted/40 border-transparent hover:border-border/30'
                           )}
                         >
-                          <span className={cn('text-xs font-mono font-bold w-12', getMethodColor(endpoint.method))}>
+                          <span className={cn('text-xs font-mono font-bold w-11', getMethodColor(endpoint.method))}>
                             {endpoint.method}
                           </span>
-                          <span className="flex-1 truncate">{endpoint.name}</span>
-                          <div className="opacity-0 group-hover:opacity-100 flex">
+                          <span className="flex-1 truncate text-xs font-medium">{endpoint.name}</span>
+                          <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 duplicateEndpoint(endpoint.id);
                                 toast.success('Endpoint duplicated');
                               }}
-                              className="p-1 hover:bg-background rounded"
+                              className="p-1.5 hover:bg-primary/10 rounded text-muted-foreground hover:text-primary transition-smooth"
+                              title="Duplicate"
                             >
                               <Copy className="h-3 w-3" />
                             </button>
@@ -295,7 +301,8 @@ export function Sidebar() {
                                 deleteEndpoint(endpoint.id);
                                 toast.success('Endpoint deleted');
                               }}
-                              className="p-1 hover:bg-background rounded text-destructive"
+                              className="p-1.5 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive transition-smooth"
+                              title="Delete"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -312,8 +319,8 @@ export function Sidebar() {
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-border/80 bg-muted/20">
-        <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground" onClick={logout}>
+      <div className="px-4 py-3 border-t border-border/60 bg-muted/15">
+        <Button variant="ghost" size="sm" className="w-full justify-start text-xs font-semibold text-muted-foreground hover:text-foreground" onClick={logout}>
           Sign Out
         </Button>
       </div>

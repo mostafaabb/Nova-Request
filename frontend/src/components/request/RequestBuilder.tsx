@@ -40,10 +40,13 @@ export function RequestBuilder() {
 
   if (!activeTab) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-        <Plus className="h-12 w-12 mb-4 opacity-20" />
-        <p>No open tabs</p>
-        <Button variant="outline" className="mt-4" onClick={() => addTab()}>
+      <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-4">
+        <div className="rounded-lg border border-dashed border-border/50 bg-background/60 p-8">
+          <Plus className="h-16 w-16 mx-auto mb-4 opacity-25" />
+          <p className="text-sm font-semibold text-foreground">No open tabs</p>
+          <p className="text-xs text-muted-foreground mt-1">Create a new request to get started</p>
+        </div>
+        <Button variant="outline" className="mt-2" onClick={() => addTab()}>
           New Request
         </Button>
       </div>
@@ -105,80 +108,80 @@ export function RequestBuilder() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background/75">
+    <div className="flex flex-col h-full bg-background/60">
       {/* Tabs List */}
       <RequestTabs />
 
       {/* URL Bar */}
-      <div className="p-4 border-b border-border/80 bg-background/70">
-        <div className="command-bar flex gap-2 rounded-lg p-2">
-        <Select 
-          value={activeTab.method} 
-          onChange={(e) => updateActiveTab({ method: e.target.value as HttpMethod })}
-          className={cn('w-28 h-11 font-black transition-all bg-background', getMethodColor(activeTab.method))}
-        >
-          {METHODS.map((m) => (
-            <option key={m} value={m}>{m}</option>
-          ))}
-        </Select>
+      <div className="px-6 py-4 border-b border-border/60 bg-background/70 shadow-sm">
+        <div className="glass-panel flex gap-3 rounded-lg p-3">
+          <Select 
+            value={activeTab.method} 
+            onChange={(e) => updateActiveTab({ method: e.target.value as HttpMethod })}
+            className={cn('w-28 h-10 font-bold transition-smooth bg-background', getMethodColor(activeTab.method))}
+          >
+            {METHODS.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </Select>
 
-        <Input
-          placeholder="Enter URL (e.g., https://api.example.com/users) or use {{variables}}"
-          value={activeTab.url}
-          onChange={(e) => updateActiveTab({ url: e.target.value })}
-          className="flex-1 mono-soft text-sm bg-background focus:bg-background transition-colors h-11"
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-        />
+          <Input
+            placeholder="Enter URL (e.g., https://api.example.com/users) or use {{variables}}"
+            value={activeTab.url}
+            onChange={(e) => updateActiveTab({ url: e.target.value })}
+            className="flex-1 mono-soft text-xs bg-background focus:bg-background transition-smooth h-10"
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          />
 
-        <Button onClick={handleSend} disabled={activeTab.isLoading} className="h-11 px-5 font-bold">
-          {activeTab.isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          ) : (
-            <Send className="h-4 w-4 mr-2" />
-          )}
-          Send
-        </Button>
+          <Button onClick={handleSend} disabled={activeTab.isLoading} className="h-10 px-6 font-semibold">
+            {activeTab.isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Send className="h-4 w-4 mr-2" />
+            )}
+            Send
+          </Button>
 
-        <Button variant="outline" onClick={openSaveModal} disabled={!currentCollection} className="h-11 font-bold">
-          <Save className="h-4 w-4 mr-2" />
-          Save
-        </Button>
+          <Button variant="outline" onClick={openSaveModal} disabled={!currentCollection} className="h-10 font-semibold">
+            <Save className="h-4 w-4 mr-2" />
+            Save
+          </Button>
         </div>
       </div>
 
       {/* Request Config Tabs */}
       <div className="flex-1 overflow-hidden">
         <Tabs defaultValue="params" className="h-full flex flex-col">
-          <div className="border-b border-border/80 px-4 bg-muted/20">
-            <TabsList className="bg-transparent gap-5">
-              <TabsTrigger value="params" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1 h-11 text-xs font-black uppercase tracking-wide">
+          <div className="border-b border-border/60 px-6 bg-muted/15">
+            <TabsList className="bg-transparent gap-8">
+              <TabsTrigger value="params" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-0 h-11 text-xs font-semibold uppercase tracking-widest">
                 Params
                 {(Array.isArray(activeTab.queryParams) ? activeTab.queryParams : []).filter(p => !!p.key).length > 0 && (
-                  <span className="ml-1 text-[10px] bg-primary/20 text-primary px-1.5 rounded-full">
+                  <span className="ml-2 text-[10px] bg-primary/15 text-primary px-2 py-0.5 rounded-full font-bold">
                     {(Array.isArray(activeTab.queryParams) ? activeTab.queryParams : []).filter(p => !!p.key).length}
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="headers" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1 h-11 text-xs font-black uppercase tracking-wide">
+              <TabsTrigger value="headers" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-0 h-11 text-xs font-semibold uppercase tracking-widest">
                 Headers
                 {(Array.isArray(activeTab.headers) ? activeTab.headers : []).filter(h => !!h.key).length > 0 && (
-                  <span className="ml-1 text-[10px] bg-primary/20 text-primary px-1.5 rounded-full">
+                  <span className="ml-2 text-[10px] bg-primary/15 text-primary px-2 py-0.5 rounded-full font-bold">
                     {(Array.isArray(activeTab.headers) ? activeTab.headers : []).filter(h => !!h.key).length}
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="body" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1 h-11 text-xs font-black uppercase tracking-wide">Body</TabsTrigger>
+              <TabsTrigger value="body" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-0 h-11 text-xs font-semibold uppercase tracking-widest">Body</TabsTrigger>
             </TabsList>
           </div>
 
-          <div className="flex-1 overflow-auto">
-            <TabsContent value="params" className="p-4 h-full m-0 border-0 outline-none">
+          <div className="flex-1 overflow-auto bg-muted/10">
+            <TabsContent value="params" className="px-6 py-4 h-full m-0 border-0 outline-none">
               <ParamsEditor />
             </TabsContent>
-            <TabsContent value="headers" className="p-4 h-full m-0 border-0 outline-none">
+            <TabsContent value="headers" className="px-6 py-4 h-full m-0 border-0 outline-none">
               <HeadersEditor />
             </TabsContent>
-            <TabsContent value="body" className="p-4 h-full m-0 border-0 outline-none">
+            <TabsContent value="body" className="px-6 py-4 h-full m-0 border-0 outline-none">
               <BodyEditor />
             </TabsContent>
           </div>
@@ -193,22 +196,24 @@ export function RequestBuilder() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
+            <label className="block text-xs font-bold uppercase text-muted-foreground mb-2">Name</label>
             <Input
               placeholder="Endpoint name"
               value={saveName}
               onChange={(e) => setSaveName(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Description (optional)</label>
+            <label className="block text-xs font-bold uppercase text-muted-foreground mb-2">Description (optional)</label>
             <Input
               placeholder="What does this endpoint do?"
               value={saveDescription}
               onChange={(e) => setSaveDescription(e.target.value)}
             />
           </div>
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-3 justify-end pt-2">
             <Button variant="ghost" onClick={() => setShowSaveModal(false)}>
               Cancel
             </Button>

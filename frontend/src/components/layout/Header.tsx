@@ -92,21 +92,21 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 flex items-center px-3 sm:px-5 justify-between bg-background/70 backdrop-blur-xl sticky top-0 z-50">
-      <div className="flex items-center gap-3 lg:gap-6 min-w-0">
-        <Link href="/dashboard" className="flex items-center gap-2.5 font-extrabold text-lg tracking-tight hover:text-primary transition-colors group shrink-0">
-          <div className="p-1.5 bg-primary rounded-md shadow-sm shadow-primary/30 group-hover:rotate-6 transition-transform">
+    <header className="h-16 flex items-center px-4 sm:px-6 justify-between bg-background/60 backdrop-blur-lg sticky top-0 z-50 border-b border-border/60 shadow-sm">
+      <div className="flex items-center gap-4 lg:gap-8 min-w-0">
+        <Link href="/dashboard" className="flex items-center gap-2.5 font-extrabold text-lg tracking-tight hover:text-primary transition-smooth group shrink-0">
+          <div className="p-1.5 bg-primary rounded-md shadow-md shadow-primary/30 group-hover:rotate-6 transition-transform duration-200">
             <Zap className="h-5 w-5 text-primary-foreground fill-primary-foreground" />
           </div>
           <span className="hidden sm:inline">Nova Request</span>
         </Link>
-        <div className="h-7 w-px bg-border hidden lg:block" />
-        <div className="hidden md:flex items-center gap-2 rounded-lg border border-border/80 bg-muted/40 px-2 py-1 shadow-sm">
-          <Users className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="h-8 w-px bg-border/50 hidden lg:block" />
+        <div className="hidden md:flex items-center gap-3 rounded-md border border-border/60 bg-muted/30 px-3 py-2 shadow-sm">
+          <Users className="h-4 w-4 text-muted-foreground shrink-0" />
           <Select
             value={activeWorkspace?.id || ''}
             onChange={(e) => setActiveWorkspace(e.target.value)}
-            className="w-44 lg:w-52 h-8 text-[11px] font-bold bg-transparent border-none shadow-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
+            className="w-44 lg:w-52 h-8 text-xs font-semibold bg-transparent border-none shadow-none focus:ring-1 focus:ring-primary/30 cursor-pointer"
             disabled={workspaces.length === 0}
           >
             {workspaces.length === 0 ? (
@@ -122,35 +122,35 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 hover:bg-primary/10"
+            className="h-8 w-8 shrink-0"
             onClick={() => setShowWorkspaceModal(true)}
             title="Manage workspace"
           >
             <Users className="h-4 w-4" />
           </Button>
         </div>
-        <div className="hidden xl:block h-7 w-px bg-border" />
-        <div className="hidden sm:flex items-center gap-2 rounded-lg border border-border/80 bg-muted/40 px-2 py-1 shadow-sm">
-          <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="hidden xl:block h-8 w-px bg-border/50" />
+        <div className="hidden sm:flex items-center gap-3 rounded-md border border-border/60 bg-muted/30 px-3 py-2 shadow-sm">
+          <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
           <Select
             value={activeEnvironmentId || 'globals'}
             onChange={(e) => setActiveEnvironment(e.target.value === 'globals' ? null : e.target.value)}
-            className="w-36 lg:w-44 h-8 text-[11px] font-bold bg-transparent border-none shadow-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
+            className="w-36 lg:w-44 h-8 text-xs font-semibold bg-transparent border-none shadow-none focus:ring-1 focus:ring-primary/30 cursor-pointer"
           >
             <option value="globals">No Environment</option>
             {environments.filter(e => e.id !== 'globals').map((env) => (
               <option key={env.id} value={env.id}>{env.name}</option>
             ))}
           </Select>
-          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" onClick={() => setShowEnvModal(true)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setShowEnvModal(true)}>
             <Settings className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         <Link href="/dashboard/history">
-          <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10 transition-all active:scale-90" title="History">
+          <Button variant="ghost" size="icon" className="h-10 w-10 transition-smooth" title="History">
             <History className="h-5 w-5" />
           </Button>
         </Link>
@@ -158,7 +158,7 @@ export function Header() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 hover:bg-primary/10 transition-all active:scale-90"
+          className="h-10 w-10 transition-smooth"
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           title="Toggle Theme"
         >
