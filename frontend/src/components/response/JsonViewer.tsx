@@ -31,11 +31,11 @@ export function JsonViewer({ data, initialExpanded = true }: JsonViewerProps) {
     if (data.match(/^https?:\/\//)) {
       return (
         <a href={data} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:underline">
-          "{data}"
+          {`"${data}"`}
         </a>
       );
     }
-    return <span className="text-green-500">"{data}"</span>;
+    return <span className="text-green-500">{`"${data}"`}</span>;
   }
 
   if (Array.isArray(data)) {
@@ -77,7 +77,7 @@ function JsonObject({ data, initialExpanded }: { data: Record<string, any>; init
         <div className="ml-4 border-l border-border pl-2">
           {entries.map(([key, value], index) => (
             <div key={key}>
-              <span className="text-primary">"{key}"</span>
+              <span className="text-primary">{`"${key}"`}</span>
               <span className="text-muted-foreground">: </span>
               <JsonViewer data={value} initialExpanded={false} />
               {index < entries.length - 1 && <span className="text-muted-foreground">,</span>}

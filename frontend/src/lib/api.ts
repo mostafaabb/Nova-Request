@@ -122,9 +122,16 @@ export const shareApi = {
 export const workspaceApi = {
   getAll: () => api.get('/workspaces'),
   create: (data: { name: string }) => api.post('/workspaces', data),
+  getMyInvitations: () => api.get('/workspaces/invitations/me'),
+  acceptInvitation: (token: string) =>
+    api.post(`/workspaces/invitations/${encodeURIComponent(token)}/accept`),
   getMembers: (workspaceId: string) => api.get(`/workspaces/${workspaceId}/members`),
   addMember: (workspaceId: string, data: { email: string; role?: string }) =>
     api.post(`/workspaces/${workspaceId}/members`, data),
+  getWorkspaceInvites: (workspaceId: string) =>
+    api.get(`/workspaces/${workspaceId}/invites`),
+  revokeWorkspaceInvite: (workspaceId: string, inviteId: string) =>
+    api.delete(`/workspaces/${workspaceId}/invites/${inviteId}`),
   updateMemberRole: (workspaceId: string, memberId: string, data: { role: string }) =>
     api.patch(`/workspaces/${workspaceId}/members/${memberId}`, data),
   removeMember: (workspaceId: string, memberId: string) =>

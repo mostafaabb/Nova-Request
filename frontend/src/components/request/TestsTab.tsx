@@ -78,7 +78,7 @@ export function TestsTab({ tests = [], onChange, testResults }: TestsTabProps) {
       <div className="flex-1 overflow-auto p-4 space-y-3">
         {tests.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
-            <p>No tests added. Click "Add Test" to get started.</p>
+            <p>{`No tests added. Click "Add Test" to get started.`}</p>
           </div>
         ) : (
           tests.map((test, idx) => {

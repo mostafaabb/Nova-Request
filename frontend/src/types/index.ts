@@ -26,6 +26,27 @@ export interface WorkspaceMember {
   };
 }
 
+/** Pending invite visible to workspace admins */
+export interface WorkspacePendingInvite {
+  id: string;
+  email: string;
+  role: string;
+  expiresAt: string;
+  createdAt: string;
+  invitedBy: { id: string; name: string; email: string };
+}
+
+/** Invite targeting the logged-in user's email */
+export interface MyWorkspaceInvitation {
+  id: string;
+  token: string;
+  role: string;
+  expiresAt: string;
+  createdAt: string;
+  workspace: { id: string; name: string };
+  invitedBy: { id: string; name: string; email: string };
+}
+
 export interface AuditLog {
   id: string;
   action: string;

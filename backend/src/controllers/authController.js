@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { acceptPendingInvitesForUser } = require('../utils/workspaceInvites');
 
 const googleClient = process.env.GOOGLE_CLIENT_ID
   ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
@@ -130,6 +131,8 @@ exports.register = async (req, res, next) => {
       return { user: newUser, workspaceId: workspace.id };
     });
 
+    await acceptPendingInvitesForUser(prisma, result.user.id, result.user.email);
+
     // Generate token
     const token = generateToken(result.user.id);
 
@@ -167,6 +170,8 @@ exports.login = async (req, res, next) => {
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
+    await acceptPendingInvitesForUser(prisma, user.id, user.email);
 
     // Generate token
     const token = generateToken(user.id);
@@ -301,6 +306,8 @@ exports.googleAuth = async (req, res, next) => {
 
       user = { ...result.user, defaultWorkspaceId: result.workspaceId };
     }
+
+    await acceptPendingInvitesForUser(prisma, user.id, user.email);
 
     const token = generateToken(user.id);
     const defaultWorkspaceId =

@@ -18,7 +18,9 @@ import {
   Trash2,
   X,
   Zap,
-  Users
+  Users,
+  Loader2,
+  Mail,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -42,11 +44,15 @@ export function Header() {
     setActiveWorkspace,
     createWorkspace,
     fetchMembers,
+    fetchWorkspacePendingInvites,
+    revokeWorkspaceInvite,
     members,
+    workspacePendingInvites,
     inviteMember,
     updateMemberRole,
     removeMember,
-    isMembersLoading
+    isMembersLoading,
+    isWorkspaceInvitesLoading,
   } = useWorkspaceStore();
 
   const [showEnvModal, setShowEnvModal] = useState(false);
@@ -63,11 +69,19 @@ export function Header() {
 
   useEffect(() => {
     if (showWorkspaceModal && activeWorkspaceIdSafe) {
-      fetchMembers(activeWorkspaceIdSafe).catch(() => {
-        toast.error('Failed to load workspace members');
+      Promise.all([
+        fetchMembers(activeWorkspaceIdSafe),
+        fetchWorkspacePendingInvites(activeWorkspaceIdSafe),
+      ]).catch(() => {
+        toast.error('Failed to load workspace members or invitations');
       });
     }
-  }, [showWorkspaceModal, activeWorkspaceIdSafe, fetchMembers]);
+  }, [
+    showWorkspaceModal,
+    activeWorkspaceIdSafe,
+    fetchMembers,
+    fetchWorkspacePendingInvites,
+  ]);
 
   const handleCreateWorkspace = async () => {
     if (!newWorkspaceName.trim()) return;
@@ -83,11 +97,41 @@ export function Header() {
   const handleInviteMember = async () => {
     if (!activeWorkspaceIdSafe || !inviteEmail.trim()) return;
     try {
-      await inviteMember(activeWorkspaceIdSafe, inviteEmail.trim(), inviteRole);
+      const result = await inviteMember(activeWorkspaceIdSafe, inviteEmail.trim(), inviteRole);
       setInviteEmail('');
-      toast.success('Member invited');
+      if (result.member) {
+        toast.success('Member added to this workspace');
+      } else if (result.invitation) {
+        toast.success(
+          result.message ||
+            'Invitation saved — they will join when they sign up or log in with that email.'
+        );
+      } else {
+        toast.success('Done');
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to invite member');
+    }
+  };
+
+  const handleCreateEnvironment = async () => {
+    if (!newEnvName.trim()) return;
+    try {
+      await addEnvironment(newEnvName.trim());
+      setNewEnvName('');
+      toast.success('Environment created');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || error.message || 'Failed to create environment');
+    }
+  };
+
+  const handleDeleteEnvironment = async () => {
+    if (!activeEnv?.id || activeEnv.id === 'globals') return;
+    try {
+      await deleteEnvironment(activeEnv.id);
+      toast.success('Environment deleted');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || error.message || 'Failed to delete environment');
     }
   };
 
@@ -281,6 +325,56 @@ export function Header() {
                 </Button>
               </div>
 
+              {canManageMembers ? (
+                <div className="mb-4 rounded-xl border border-dashed border-border/80 bg-muted/10 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+                      <Mail className="h-3.5 w-3.5" aria-hidden />
+                      Pending invitations
+                    </h4>
+                    {isWorkspaceInvitesLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    ) : null}
+                  </div>
+                  {workspacePendingInvites.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      No pending email invitations. Inviting someone who does not have an account yet
+                      creates an invitation they complete when they register or sign in.
+                    </p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {workspacePendingInvites.map((inv) => (
+                        <li
+                          key={inv.id}
+                          className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-xs"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold">{inv.email}</p>
+                            <p className="capitalize text-muted-foreground">{inv.role}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                            title="Revoke invitation"
+                            onClick={async () => {
+                              try {
+                                await revokeWorkspaceInvite(activeWorkspace!.id, inv.id);
+                                toast.success('Invitation revoked');
+                              } catch (error: any) {
+                                toast.error(error.response?.data?.error || 'Failed to revoke');
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ) : null}
+
               <div className="space-y-2">
                 {isMembersLoading ? (
                   <div className="flex items-center justify-center py-6">
@@ -375,20 +469,14 @@ export function Header() {
                     onChange={(e) => setNewEnvName(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && newEnvName.trim()) {
-                        addEnvironment(newEnvName);
-                        setNewEnvName('');
+                        handleCreateEnvironment();
                       }
                     }}
                   />
                   <Button 
                     size="icon" 
                     className="h-8 w-8 min-w-[32px]" 
-                    onClick={() => {
-                      if (newEnvName.trim()) {
-                        addEnvironment(newEnvName);
-                        setNewEnvName('');
-                      }
-                    }}
+                    onClick={() => handleCreateEnvironment()}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -408,7 +496,7 @@ export function Header() {
                     variant="ghost" 
                     size="icon" 
                     className="text-destructive hover:bg-destructive/10" 
-                    onClick={() => deleteEnvironment(activeEnv!.id)}
+                    onClick={() => handleDeleteEnvironment()}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

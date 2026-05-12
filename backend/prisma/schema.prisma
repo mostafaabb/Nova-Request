@@ -25,6 +25,7 @@ model User {
   createdWorkspaces Workspace[] @relation("WorkspaceCreatedBy")
   auditLogs    AuditLog[]
   defaultWorkspace Workspace? @relation("DefaultWorkspace", fields: [defaultWorkspaceId], references: [id])
+  invitesSent  WorkspaceInvite[] @relation("WorkspaceInviteInviter")
 
   @@map("users")
 }
@@ -43,9 +44,28 @@ model Workspace {
   auditLogs   AuditLog[]
   requestHistory RequestHistory[]
   environments Environment[]
+  invites      WorkspaceInvite[]
 
   @@index([createdById])
   @@map("workspaces")
+}
+
+model WorkspaceInvite {
+  id           String    @id @default(uuid())
+  workspaceId  String    @map("workspace_id")
+  email        String
+  role         String    @default("member")
+  token        String    @unique @default(uuid())
+  invitedById  String    @map("invited_by_id")
+  expiresAt    DateTime  @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy    User      @relation("WorkspaceInviteInviter", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, email])
+  @@index([email])
+  @@map("workspace_invites")
 }
 
 model WorkspaceMember {

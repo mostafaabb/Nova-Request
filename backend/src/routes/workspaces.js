@@ -15,6 +15,9 @@ router.post('/', [
   validate
 ], workspaceController.create);
 
+router.get('/invitations/me', workspaceController.getMyPendingInvitations);
+router.post('/invitations/:token/accept', workspaceController.acceptInvitationByToken);
+
 router.get('/:id/members', workspaceController.getMembers);
 
 router.post('/:id/members', [
@@ -22,6 +25,9 @@ router.post('/:id/members', [
   body('role').optional().isIn(['owner', 'admin', 'member']),
   validate
 ], workspaceController.addMember);
+
+router.get('/:id/invites', workspaceController.getWorkspaceInvites);
+router.delete('/:id/invites/:inviteId', workspaceController.revokeWorkspaceInvite);
 
 router.patch('/:id/members/:memberId', [
   body('role').isIn(['owner', 'admin', 'member']),

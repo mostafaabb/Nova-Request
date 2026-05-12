@@ -2,10 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
+import { useWorkspaceStore } from '@/store/workspaceStore';
+import { useEnvironmentStore } from '@/store/environmentStore';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { ResizableSplit } from '@/components/layout/ResizableSplit';
+import { PendingInvitationsBanner } from '@/components/workspace/PendingInvitationsBanner';
 
 export default function DashboardLayout({
   children,
@@ -14,10 +18,25 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
+  const fetchMyInvitations = useWorkspaceStore((s) => s.fetchMyInvitations);
+  const fetchEnvironments = useEnvironmentStore((s) => s.fetchForWorkspace);
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !activeWorkspaceId) return;
+    fetchEnvironments(activeWorkspaceId).catch(() => {
+      toast.error('Failed to sync environments for this workspace');
+    });
+  }, [isAuthenticated, activeWorkspaceId, fetchEnvironments]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetchMyInvitations().catch(() => {});
+  }, [isAuthenticated, fetchMyInvitations]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -27,8 +46,8 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -38,7 +57,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background text-foreground">
+    <div className="flex h-screen flex-col bg-background text-foreground">
       <Header />
       <div className="flex-1 overflow-hidden px-3 pb-3">
         <ResizableSplit
@@ -50,7 +69,10 @@ export default function DashboardLayout({
           first={<Sidebar />}
           second={
             <main className="h-full overflow-hidden rounded-lg border border-border/80 bg-background/70 shadow-sm backdrop-blur">
-              {children}
+              <div className="flex h-full flex-col overflow-auto p-3 md:p-4">
+                <PendingInvitationsBanner />
+                <div className="min-h-0 flex-1">{children}</div>
+              </div>
             </main>
           }
         />
