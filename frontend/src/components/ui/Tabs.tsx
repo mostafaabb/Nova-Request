@@ -58,6 +58,7 @@ export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
   return (
     <button
       type="button"
+      data-state={isActive ? 'active' : 'inactive'}
       className={cn(
         'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',

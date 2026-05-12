@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const { nanoid } = require('nanoid');
 const { logAudit } = require('../utils/audit');
+const { parseJsonFields } = require('../utils/prisma-helpers');
 const prisma = new PrismaClient();
 
 exports.getAll = async (req, res, next) => {
@@ -49,7 +50,12 @@ exports.getOne = async (req, res, next) => {
       return res.status(404).json({ error: 'Collection not found' });
     }
 
-    res.json({ collection });
+    res.json({
+      collection: {
+        ...collection,
+        endpoints: collection.endpoints.map((ep) => parseJsonFields(ep)),
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -278,17 +284,25 @@ exports.exportCollection = async (req, res, next) => {
       collection: {
         name: collection.name,
         description: collection.description,
-        endpoints: collection.endpoints.map(ep => ({
-          name: ep.name,
-          description: ep.description,
-          method: ep.method,
-          url: ep.url,
-          headers: ep.headers,
-          queryParams: ep.queryParams,
-          body: ep.body,
-          bodyType: ep.bodyType,
-          tags: ep.tags
-        }))
+        endpoints: collection.endpoints.map((ep) => {
+          const p = parseJsonFields(ep);
+          return {
+            name: ep.name,
+            description: ep.description,
+            method: ep.method,
+            url: ep.url,
+            headers: p.headers,
+            queryParams: p.queryParams,
+            body: ep.body,
+            bodyType: ep.bodyType,
+            tags: p.tags,
+            auth: p.auth ?? null,
+            formFields: p.formFields ?? null,
+            preRequestScript: ep.preRequestScript,
+            postRequestScript: ep.postRequestScript,
+            tests: p.tests ?? null,
+          };
+        })
       }
     };
 
@@ -328,11 +342,27 @@ exports.importCollection = async (req, res, next) => {
             description: ep.description,
             method: ep.method || 'GET',
             url: ep.url || '',
-            headers: JSON.stringify(ep.headers || []),
-            queryParams: JSON.stringify(ep.queryParams || []),
+            headers:
+              typeof ep.headers === 'string'
+                ? ep.headers
+                : JSON.stringify(ep.headers || []),
+            queryParams:
+              typeof ep.queryParams === 'string'
+                ? ep.queryParams
+                : JSON.stringify(ep.queryParams || []),
             body: ep.body,
             bodyType: ep.bodyType || 'json',
-            tags: JSON.stringify(ep.tags || []),
+            auth: ep.auth ?? null,
+            formFields: ep.formFields ?? null,
+            preRequestScript: ep.preRequestScript ?? null,
+            postRequestScript: ep.postRequestScript ?? null,
+            tests: Array.isArray(ep.tests)
+              ? JSON.stringify(ep.tests)
+              : ep.tests || null,
+            tags:
+              typeof ep.tags === 'string'
+                ? ep.tags
+                : JSON.stringify(ep.tags || []),
             order: index
           }))
         }

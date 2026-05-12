@@ -38,9 +38,19 @@ const resolveBody = (body, variables = {}) => {
   return body;
 };
 
+const resolveKeyValueRows = (rows = [], variables = {}) => {
+  if (!Array.isArray(rows)) return [];
+  return rows.map((row) => ({
+    ...row,
+    key: resolveVariables(String(row.key || ''), variables),
+    value: resolveVariables(String(row.value || ''), variables),
+  }));
+};
+
 module.exports = {
   resolveVariables,
   resolveUrl,
   resolveHeaders,
   resolveBody,
+  resolveKeyValueRows,
 };

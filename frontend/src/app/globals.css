@@ -119,6 +119,8 @@
 .method-put { @apply text-amber-600 dark:text-amber-300; }
 .method-patch { @apply text-violet-600 dark:text-violet-300; }
 .method-delete { @apply text-rose-600 dark:text-rose-300; }
+.method-head { @apply text-cyan-600 dark:text-cyan-300; }
+.method-options { @apply text-slate-600 dark:text-slate-300; }
 
 /* Status code colors */
 .status-2xx { @apply bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20; }

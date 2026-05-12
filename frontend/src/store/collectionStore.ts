@@ -48,7 +48,12 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
     set({ isLoading: true });
     try {
       const response = await collectionApi.getOne(id);
-      set({ currentCollection: response.data.collection, isLoading: false });
+      const full = response.data.collection;
+      set((state) => ({
+        currentCollection: full,
+        collections: state.collections.map((c) => (c.id === id ? { ...c, ...full } : c)),
+        isLoading: false,
+      }));
     } catch (error) {
       set({ isLoading: false });
       throw error;

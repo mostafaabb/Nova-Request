@@ -8,7 +8,7 @@ export function RequestTabs() {
   const { tabs, activeTabId, setActiveTab, removeTab, addTab } = useRequestStore();
 
   return (
-    <div className="flex items-center bg-muted/50 border-b border-border/80 overflow-x-auto no-scrollbar">
+    <div className="flex items-stretch shrink-0 min-h-[42px] bg-muted/50 border-b border-border/80 overflow-x-auto scrollbar-thin">
       {tabs.map((tab) => (
         <div
           key={tab.id}

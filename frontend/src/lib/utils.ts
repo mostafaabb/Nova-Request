@@ -26,6 +26,8 @@ export function getMethodColor(method: string): string {
     PUT: 'method-put',
     PATCH: 'method-patch',
     DELETE: 'method-delete',
+    HEAD: 'method-head',
+    OPTIONS: 'method-options',
   };
   return colors[method.toUpperCase()] || '';
 }

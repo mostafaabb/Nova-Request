@@ -55,6 +55,26 @@ export interface Collection {
   };
 }
 
+export interface RequestTest {
+  name?: string;
+  path: string;
+  operator: string;
+  value: string;
+}
+
+export type AuthType = 'none' | 'bearer' | 'basic' | 'apikey';
+
+export interface AuthConfig {
+  type: AuthType;
+  bearerToken?: string;
+  basicUsername?: string;
+  basicPassword?: string;
+  apiKeyKey?: string;
+  apiKeyValue?: string;
+  apiKeyIn?: 'header' | 'query';
+  apiKeyHeaderName?: string;
+}
+
 export interface Endpoint {
   id: string;
   collectionId: string;
@@ -66,6 +86,11 @@ export interface Endpoint {
   queryParams: KeyValuePair[];
   body?: string;
   bodyType: BodyType;
+  auth?: AuthConfig | null;
+  formFields?: KeyValuePair[] | null;
+  preRequestScript?: string | null;
+  postRequestScript?: string | null;
+  tests?: RequestTest[] | string | null;
   tags: string[];
   order: number;
   createdAt: string;
@@ -78,8 +103,20 @@ export interface KeyValuePair {
   enabled: boolean;
 }
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-export type BodyType = 'json' | 'form-data' | 'raw' | 'none';
+export type HttpMethod =
+  | 'GET'
+  | 'POST'
+  | 'PUT'
+  | 'PATCH'
+  | 'DELETE'
+  | 'HEAD'
+  | 'OPTIONS';
+export type BodyType =
+  | 'json'
+  | 'form-data'
+  | 'x-www-form-urlencoded'
+  | 'raw'
+  | 'none';
 
 export interface RequestHistory {
   id: string;
@@ -104,6 +141,16 @@ export interface ApiResponse {
   headers?: Record<string, string>;
   data?: any;
   responseTime?: number;
+  requestId?: string;
+  tests?: {
+    passed: number;
+    failed: number;
+    results: unknown[];
+  };
+  scripts?: {
+    preRequest?: { error?: string | null };
+    postRequest?: { error?: string | null };
+  };
   error?: {
     message: string;
     code?: string;

@@ -50,6 +50,7 @@ export function Sidebar() {
 
   const [search, setSearch] = useState('');
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set());
+  const [loadingCollectionId, setLoadingCollectionId] = useState<string | null>(null);
   const [showNewCollectionModal, setShowNewCollectionModal] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
@@ -63,11 +64,17 @@ export function Sidebar() {
     const newExpanded = new Set(expandedCollections);
     if (newExpanded.has(collectionId)) {
       newExpanded.delete(collectionId);
+      setExpandedCollections(newExpanded);
     } else {
       newExpanded.add(collectionId);
-      await fetchCollection(collectionId);
+      setExpandedCollections(newExpanded);
+      setLoadingCollectionId(collectionId);
+      try {
+        await fetchCollection(collectionId);
+      } finally {
+        setLoadingCollectionId(null);
+      }
     }
-    setExpandedCollections(newExpanded);
   };
 
   const handleCreateCollection = async () => {
@@ -260,48 +267,66 @@ export function Sidebar() {
                     </div>
                   </div>
 
-                  {/* Endpoints */}
-                  {isExpanded && currentCollection?.id === collection.id && (
-                    <div className="ml-6 mt-1 space-y-0.5">
-                      {currentCollection.endpoints?.map((endpoint) => (
-                        <div
-                          key={endpoint.id}
-                          onClick={() => handleSelectEndpoint(endpoint)}
-                          className={cn(
-                            'flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer text-sm group border border-transparent transition-colors',
-                            currentEndpoint?.id === endpoint.id
-                              ? 'bg-primary/10 border-primary/20'
-                              : 'hover:bg-accent/50'
-                          )}
-                        >
-                          <span className={cn('text-xs font-mono font-bold w-12', getMethodColor(endpoint.method))}>
-                            {endpoint.method}
-                          </span>
-                          <span className="flex-1 truncate">{endpoint.name}</span>
-                          <div className="opacity-0 group-hover:opacity-100 flex">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                duplicateEndpoint(endpoint.id);
-                                toast.success('Endpoint duplicated');
-                              }}
-                              className="p-1 hover:bg-background rounded"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteEndpoint(endpoint.id);
-                                toast.success('Endpoint deleted');
-                              }}
-                              className="p-1 hover:bg-background rounded text-destructive"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </div>
+                  {isExpanded && (
+                    <div className="ml-6 mt-1 space-y-0.5 min-h-[2rem]">
+                      {loadingCollectionId === collection.id ? (
+                        <div className="text-[11px] text-muted-foreground px-2 py-2 font-medium">
+                          Loading endpoints…
                         </div>
-                      ))}
+                      ) : (collection.endpoints?.length ?? 0) === 0 ? (
+                        <div className="text-[11px] text-muted-foreground px-2 py-2">
+                          {(collection._count?.endpoints ?? 0) === 0
+                            ? 'No requests in this collection yet.'
+                            : 'Could not load requests. Try collapsing and expanding again.'}
+                        </div>
+                      ) : (
+                        collection.endpoints!.map((endpoint) => (
+                          <div
+                            key={endpoint.id}
+                            onClick={() => handleSelectEndpoint(endpoint)}
+                            className={cn(
+                              'flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer text-sm group border border-transparent transition-colors',
+                              currentEndpoint?.id === endpoint.id
+                                ? 'bg-primary/10 border-primary/20'
+                                : 'hover:bg-accent/50'
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'text-xs font-mono font-bold w-[3.25rem] shrink-0',
+                                getMethodColor(endpoint.method)
+                              )}
+                            >
+                              {endpoint.method}
+                            </span>
+                            <span className="flex-1 truncate min-w-0">{endpoint.name}</span>
+                            <div className="opacity-0 group-hover:opacity-100 flex shrink-0">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  duplicateEndpoint(endpoint.id);
+                                  toast.success('Endpoint duplicated');
+                                }}
+                                className="p-1 hover:bg-background rounded"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteEndpoint(endpoint.id);
+                                  toast.success('Endpoint deleted');
+                                }}
+                                className="p-1 hover:bg-background rounded text-destructive"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   )}
                 </div>

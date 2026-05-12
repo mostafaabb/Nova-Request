@@ -90,10 +90,16 @@ export const proxyApi = {
   execute: (data: {
     method: string;
     url: string;
-    headers?: any[];
-    body?: any;
+    headers?: { key: string; value: string; enabled?: boolean }[];
+    body?: string;
+    bodyType?: string;
+    formFields?: { key: string; value: string; enabled?: boolean }[];
     timeout?: number;
     endpointId?: string;
+    environmentVariables?: Record<string, string>;
+    preRequestScript?: string;
+    postRequestScript?: string;
+    tests?: { name?: string; path: string; operator: string; value: string }[];
   }) => api.post('/proxy', data),
 };
 

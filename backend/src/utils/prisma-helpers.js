@@ -1,4 +1,4 @@
-const JSON_FIELDS = ['headers', 'queryParams', 'tags', 'responseHeaders'];
+const JSON_FIELDS = ['headers', 'queryParams', 'tags', 'responseHeaders', 'tests'];
 
 const parseJsonFields = (data) => {
   if (!data) return data;

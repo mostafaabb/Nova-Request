@@ -80,15 +80,17 @@ export function ResponseViewer() {
                 {response.error.message}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-left">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
                <div className="p-4 rounded-xl border border-border bg-background">
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Status Code</p>
-                  <p className="text-sm font-mono font-bold text-destructive">{response.status || 'N/A'}</p>
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">HTTP status</p>
+                  <p className="text-sm font-mono font-bold text-destructive">{response.status ?? '—'}</p>
                </div>
-               <div className="p-4 rounded-xl border border-border bg-background">
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Search ID</p>
-                  <p className="text-sm font-mono font-bold truncate">ERR-{Math.random().toString(36).substr(2, 6).toUpperCase()}</p>
-               </div>
+               {response.requestId && (
+                 <div className="p-4 rounded-xl border border-border bg-background">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Request ID</p>
+                    <p className="text-sm font-mono font-bold truncate">{response.requestId}</p>
+                 </div>
+               )}
             </div>
          </div>
       </div>
@@ -112,7 +114,39 @@ export function ResponseViewer() {
             {formatResponseTime(response.responseTime!)}
           </span>
         </div>
-        <div className="flex-1" />
+        {response.requestId && (
+          <div className="hidden md:flex items-center gap-2 min-w-0 max-w-[200px] xl:max-w-xs">
+            <span className="text-[10px] font-bold uppercase text-muted-foreground shrink-0">ID</span>
+            <span className="text-xs font-mono font-semibold truncate" title={response.requestId}>
+              {response.requestId}
+            </span>
+          </div>
+        )}
+        {response.tests && response.tests.passed + response.tests.failed > 0 && (
+          <div
+            className={cn(
+              'text-[10px] font-black uppercase tracking-wide px-2 py-1 rounded-md border',
+              response.tests.failed > 0
+                ? 'bg-destructive/10 text-destructive border-destructive/20'
+                : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20'
+            )}
+          >
+            Tests {response.tests.passed}/{response.tests.passed + response.tests.failed} ok
+          </div>
+        )}
+        {(response.scripts?.preRequest?.error || response.scripts?.postRequest?.error) && (
+          <span
+            className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 max-w-[140px] truncate"
+            title={
+              [response.scripts?.preRequest?.error, response.scripts?.postRequest?.error]
+                .filter(Boolean)
+                .join(' · ') || ''
+            }
+          >
+            Script error
+          </span>
+        )}
+        <div className="flex-1 min-w-2" />
         <Button variant="outline" size="sm" onClick={handleCopy} className="h-8 gap-2 font-bold text-xs">
           {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
           {copied ? 'Copied' : 'Copy JSON'}
@@ -132,7 +166,7 @@ export function ResponseViewer() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="raw" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1 h-10 font-bold text-xs uppercase">Raw JSON</TabsTrigger>
+            <TabsTrigger value="raw" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary rounded-none shadow-none px-1 h-10 font-bold text-xs uppercase">Raw</TabsTrigger>
           </TabsList>
         </div>
 

@@ -112,6 +112,8 @@ model Endpoint {
   queryParams           String?    @map("query_params")
   body                  String?
   bodyType              String     @default("json") @map("body_type")
+  auth                  Json?
+  formFields            Json?      @map("form_fields")
   tags                  String?
   order                 Int        @default(0)
   preRequestScript      String?    @map("pre_request_script")

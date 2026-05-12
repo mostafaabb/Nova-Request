@@ -6,17 +6,11 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { cn } from '@/lib/utils';
-
-interface Test {
-  name?: string;
-  path: string;
-  operator: string;
-  value: string;
-}
+import type { RequestTest } from '@/types';
 
 interface TestsTabProps {
-  tests: Test[];
-  onChange: (tests: Test[]) => void;
+  tests: RequestTest[];
+  onChange: (tests: RequestTest[]) => void;
   testResults?: {
     passed: number;
     failed: number;
@@ -37,7 +31,12 @@ const OPERATORS = [
 ];
 
 export function TestsTab({ tests = [], onChange, testResults }: TestsTabProps) {
-  const [newTest, setNewTest] = useState<Test>({ path: '', operator: 'equals', value: '', name: '' });
+  const [newTest, setNewTest] = useState<RequestTest>({
+    path: '',
+    operator: 'equals',
+    value: '',
+    name: '',
+  });
 
   const handleAddTest = () => {
     if (newTest.path.trim()) {
@@ -46,7 +45,7 @@ export function TestsTab({ tests = [], onChange, testResults }: TestsTabProps) {
     }
   };
 
-  const handleUpdateTest = (index: number, field: keyof Test, value: string) => {
+  const handleUpdateTest = (index: number, field: keyof RequestTest, value: string) => {
     const updated = [...tests];
     updated[index] = { ...updated[index], [field]: value };
     onChange(updated);

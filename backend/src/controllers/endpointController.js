@@ -60,7 +60,22 @@ exports.getOne = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     const { collectionId } = req.params;
-    const { name, description, method, url, headers, queryParams, body, bodyType, tags } = req.body;
+    const {
+      name,
+      description,
+      method,
+      url,
+      headers,
+      queryParams,
+      body,
+      bodyType,
+      tags,
+      auth,
+      formFields,
+      preRequestScript,
+      postRequestScript,
+      tests,
+    } = req.body;
 
     // Check collection ownership
     const collection = await prisma.collection.findFirst({
@@ -94,6 +109,11 @@ exports.create = async (req, res, next) => {
         queryParams: JSON.stringify(queryParams || []),
         body,
         bodyType: bodyType || 'json',
+        auth: auth ?? null,
+        formFields: formFields ?? null,
+        preRequestScript: preRequestScript ?? null,
+        postRequestScript: postRequestScript ?? null,
+        tests: Array.isArray(tests) ? JSON.stringify(tests) : tests || null,
         tags: JSON.stringify(tags || []),
         order: (maxOrder._max.order || 0) + 1
       }
@@ -117,7 +137,23 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, description, method, url, headers, queryParams, body, bodyType, tags, order } = req.body;
+    const {
+      name,
+      description,
+      method,
+      url,
+      headers,
+      queryParams,
+      body,
+      bodyType,
+      tags,
+      order,
+      auth,
+      formFields,
+      preRequestScript,
+      postRequestScript,
+      tests,
+    } = req.body;
 
     // Check ownership
     const existing = await prisma.endpoint.findUnique({
@@ -144,7 +180,17 @@ exports.update = async (req, res, next) => {
         body,
         bodyType,
         tags: JSON.stringify(tags),
-        order
+        order,
+        auth: auth !== undefined ? auth : undefined,
+        formFields: formFields !== undefined ? formFields : undefined,
+        preRequestScript: preRequestScript !== undefined ? preRequestScript : undefined,
+        postRequestScript: postRequestScript !== undefined ? postRequestScript : undefined,
+        tests:
+          tests !== undefined
+            ? Array.isArray(tests)
+              ? JSON.stringify(tests)
+              : tests
+            : undefined,
       }
     });
 
@@ -232,6 +278,11 @@ exports.duplicate = async (req, res, next) => {
         queryParams: original.queryParams,
         body: original.body,
         bodyType: original.bodyType,
+        auth: original.auth ?? null,
+        formFields: original.formFields ?? null,
+        preRequestScript: original.preRequestScript ?? null,
+        postRequestScript: original.postRequestScript ?? null,
+        tests: original.tests ?? null,
         tags: original.tags,
         order: (maxOrder._max.order || 0) + 1
       }
