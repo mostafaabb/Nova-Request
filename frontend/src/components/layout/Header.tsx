@@ -101,12 +101,12 @@ export function Header() {
           <span className="hidden sm:inline">Nova Request</span>
         </Link>
         <div className="h-7 w-px bg-border hidden lg:block" />
-        <div className="hidden md:flex items-center gap-2 rounded-lg border border-border/80 bg-muted/40 px-2 py-1 shadow-sm">
-          <Users className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="hidden md:flex items-center gap-1.5 rounded-lg border border-border/80 bg-muted/40 pl-2 pr-1 py-1 shadow-sm">
+          <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0 pointer-events-none" aria-hidden />
           <Select
             value={activeWorkspace?.id || ''}
             onChange={(e) => setActiveWorkspace(e.target.value)}
-            className="w-44 lg:w-52 h-8 text-[11px] font-bold bg-transparent border-none shadow-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
+            className="min-w-0 w-44 lg:w-52 h-8 text-[11px] font-bold bg-transparent border-none shadow-none pr-7 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 cursor-pointer"
             disabled={workspaces.length === 0}
           >
             {workspaces.length === 0 ? (
@@ -122,7 +122,14 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 hover:bg-primary/10"
+            type="button"
+            className={cn(
+              'h-8 w-8 min-w-8 shrink-0 rounded-md',
+              'text-muted-foreground hover:text-foreground hover:bg-primary/10',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
+              'active:scale-100 active:bg-primary/15',
+              'transition-colors'
+            )}
             onClick={() => setShowWorkspaceModal(true)}
             title="Manage workspace"
           >
@@ -130,19 +137,32 @@ export function Header() {
           </Button>
         </div>
         <div className="hidden xl:block h-7 w-px bg-border" />
-        <div className="hidden sm:flex items-center gap-2 rounded-lg border border-border/80 bg-muted/40 px-2 py-1 shadow-sm">
-          <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="hidden sm:flex items-center gap-1.5 rounded-lg border border-border/80 bg-muted/40 pl-2 pr-1 py-1 shadow-sm">
+          <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0 pointer-events-none" aria-hidden />
           <Select
             value={activeEnvironmentId || 'globals'}
             onChange={(e) => setActiveEnvironment(e.target.value === 'globals' ? null : e.target.value)}
-            className="w-36 lg:w-44 h-8 text-[11px] font-bold bg-transparent border-none shadow-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
+            className="min-w-0 w-36 lg:w-44 h-8 text-[11px] font-bold bg-transparent border-none shadow-none pr-7 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 cursor-pointer"
           >
             <option value="globals">No Environment</option>
             {environments.filter(e => e.id !== 'globals').map((env) => (
               <option key={env.id} value={env.id}>{env.name}</option>
             ))}
           </Select>
-          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" onClick={() => setShowEnvModal(true)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            type="button"
+            className={cn(
+              'h-8 w-8 min-w-8 shrink-0 rounded-md',
+              'text-muted-foreground hover:text-foreground hover:bg-primary/10',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
+              'active:scale-100 active:bg-primary/15',
+              'transition-colors'
+            )}
+            onClick={() => setShowEnvModal(true)}
+            title="Environment variables"
+          >
             <Settings className="h-4 w-4" />
           </Button>
         </div>
