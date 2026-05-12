@@ -40,13 +40,13 @@ export default function DashboardLayout({
   return (
     <div className="h-screen flex flex-col bg-background text-foreground">
       <Header />
-      <div className="flex-1 overflow-hidden px-4 py-3 gap-3">
+      <div className="flex-1 overflow-hidden px-3 pb-3">
         <ResizableSplit
           defaultSize={22}
           minSize={14}
           maxSize={38}
           storageKey="nova-sidebar-width"
-          handleClassName="mx-2 rounded-full bg-border/40 hover:bg-border/60 transition-colors"
+          handleClassName="mx-1.5 rounded-full"
           first={<Sidebar />}
           second={
             <main className="h-full overflow-hidden rounded-lg border border-border/80 bg-background/70 shadow-sm backdrop-blur">

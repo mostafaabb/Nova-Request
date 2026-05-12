@@ -53,11 +53,6 @@
   * {
     @apply border-border;
   }
-
-  html {
-    scroll-behavior: smooth;
-  }
-
   body {
     @apply bg-background text-foreground antialiased;
     min-width: 320px;
@@ -71,8 +66,8 @@
     z-index: -1;
     pointer-events: none;
     background:
-      linear-gradient(135deg, hsl(var(--primary) / 0.08), transparent 35%),
-      radial-gradient(circle at 82% 8%, hsl(166 88% 42% / 0.08), transparent 32%),
+      linear-gradient(135deg, hsl(var(--primary) / 0.12), transparent 30%),
+      radial-gradient(circle at 82% 8%, hsl(166 88% 42% / 0.12), transparent 28%),
       linear-gradient(hsl(var(--background)), hsl(var(--background)));
   }
 }
@@ -81,76 +76,52 @@
 .json-viewer {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
-/* Custom scrollbar - improved visibility */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-background;
+  @apply bg-muted;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/25 rounded-full transition-colors;
+  @apply bg-muted-foreground/30 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/45;
+  @apply bg-muted-foreground/50;
 }
 
-/* No scrollbar utility */
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* Component utilities */
 .surface-panel {
-  @apply border border-border bg-background/90 rounded-lg shadow-sm;
+  @apply border border-border bg-background/90 shadow-sm;
 }
 
 .glass-panel {
-  @apply border border-border/80 bg-background/75 rounded-lg shadow-sm backdrop-blur-xl;
+  @apply border border-border/80 bg-background/75 shadow-sm backdrop-blur-xl;
 }
 
 .command-bar {
-  @apply border border-border/80 bg-muted/40 rounded-lg shadow-sm;
+  @apply border border-border/80 bg-muted/40 shadow-sm;
 }
 
 .mono-soft {
   font-family: 'SFMono-Regular', 'Cascadia Code', 'Roboto Mono', 'Menlo', monospace;
 }
 
-/* Method colors - enhanced contrast */
-.method-get { @apply text-emerald-600 dark:text-emerald-400 font-semibold; }
-.method-post { @apply text-blue-600 dark:text-blue-400 font-semibold; }
-.method-put { @apply text-amber-600 dark:text-amber-400 font-semibold; }
-.method-patch { @apply text-violet-600 dark:text-violet-400 font-semibold; }
-.method-delete { @apply text-red-600 dark:text-red-400 font-semibold; }
-.method-options { @apply text-gray-600 dark:text-gray-400 font-semibold; }
-.method-head { @apply text-gray-600 dark:text-gray-400 font-semibold; }
+/* Method colors */
+.method-get { @apply text-emerald-500 dark:text-emerald-300; }
+.method-post { @apply text-sky-600 dark:text-sky-300; }
+.method-put { @apply text-amber-600 dark:text-amber-300; }
+.method-patch { @apply text-violet-600 dark:text-violet-300; }
+.method-delete { @apply text-rose-600 dark:text-rose-300; }
 
-/* Status code colors - better styling */
-.status-2xx { @apply bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 rounded-md; }
-.status-3xx { @apply bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-200 border border-blue-200 dark:border-blue-800 rounded-md; }
-.status-4xx { @apply bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-200 border border-amber-200 dark:border-amber-800 rounded-md; }
-.status-5xx { @apply bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-200 border border-red-200 dark:border-red-800 rounded-md; }
-
-/* Smooth transitions */
-@layer components {
-  .transition-smooth {
-    @apply transition-all duration-200 ease-out;
-  }
-
-  .transition-fast {
-    @apply transition-all duration-150 ease-out;
-  }
-}
+/* Status code colors */
+.status-2xx { @apply bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20; }
+.status-3xx { @apply bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20; }
+.status-4xx { @apply bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20; }
+.status-5xx { @apply bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20; }
