@@ -20,17 +20,22 @@ export function GoogleAuthSection({ className }: { className?: string }) {
   }
 
   return (
-    <div className={cn('space-y-5', className)}>
-      <div className="relative flex min-h-[44px] w-full items-center justify-center">
+    <div className={cn('space-y-6', className)}>
+      <div className="relative">
         {busy ? (
           <div
-            className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/85 backdrop-blur-[2px]"
+            className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/90 backdrop-blur-sm"
             aria-busy
           >
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : null}
-        <div className="flex w-full justify-center overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm">
+        <div
+          className={cn(
+            'overflow-hidden rounded-xl border border-border/70 bg-muted/[0.35] shadow-inner',
+            'transition-[border-color,box-shadow] duration-200 hover:border-border dark:bg-muted/20'
+          )}
+        >
           <GoogleLogin
             onSuccess={async (res) => {
               if (!res.credential) return;
@@ -54,7 +59,7 @@ export function GoogleAuthSection({ className }: { className?: string }) {
             }}
             theme="outline"
             size="large"
-            width={384}
+            width={400}
             text="continue_with"
             shape="rectangular"
             logo_alignment="left"

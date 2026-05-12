@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { AuthPageLayout } from '@/components/auth/AuthPageLayout';
-import { PasswordInput } from '@/components/auth/PasswordInput';
+import { AuthPasswordField, AuthTextField } from '@/components/auth/AuthField';
 import { PasswordStrength } from '@/components/auth/PasswordStrength';
 import { GoogleAuthSection } from '@/components/auth/GoogleAuthSection';
 import { User, Mail, Lock, Loader2 } from 'lucide-react';
@@ -51,108 +50,92 @@ export default function RegisterPage() {
 
   return (
     <AuthPageLayout
-      title="Create your account"
-      description="Join with Google or email. One profile powers shared workspaces, environments, and request history."
-      mobileTagline="Start testing APIs with structure and speed."
+      eyebrow="Get started"
+      title="Create your Nova workspace"
+      description="Google or email — either route spins up your profile, default workspace, and synced tooling in seconds."
+      mobileTagline="Structure collections, environments, and runs without juggling scratchpads."
       footer={
         <>
-          Already have an account?{' '}
+          Already on Nova?{' '}
           <Link
             href="/auth/login"
-            className="font-semibold text-primary underline-offset-4 hover:underline"
+            className="font-semibold text-primary underline-offset-[5px] transition-colors hover:text-primary/85 hover:underline"
           >
-            Sign in
+            Sign in instead
           </Link>
         </>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-8">
         <GoogleAuthSection />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <label htmlFor="register-name" className="text-sm font-medium text-foreground">
-            Full name
-          </label>
-          <div className="relative">
-            <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="register-name"
-              type="text"
-              autoComplete="name"
-              placeholder="Alex Morgan"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              minLength={2}
-              className="h-11 rounded-lg border-border/80 pl-10 text-[15px] shadow-sm"
-            />
-          </div>
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <AuthTextField
+            id="register-name"
+            label="Full name"
+            type="text"
+            icon={User}
+            autoComplete="name"
+            placeholder="Alex Morgan"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            minLength={2}
+          />
 
-        <div className="space-y-2">
-          <label htmlFor="register-email" className="text-sm font-medium text-foreground">
-            Work email
-          </label>
-          <div className="relative">
-            <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="register-email"
-              type="email"
-              autoComplete="email"
-              placeholder="name@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="h-11 rounded-lg border-border/80 pl-10 text-[15px] shadow-sm"
-            />
-          </div>
-        </div>
+          <AuthTextField
+            id="register-email"
+            label="Work email"
+            type="email"
+            icon={Mail}
+            autoComplete="email"
+            placeholder="you@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-        <div className="space-y-2">
-          <label htmlFor="register-password" className="text-sm font-medium text-foreground">
-            Password
-          </label>
-          <div className="relative">
-            <Lock className="pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <PasswordInput
+          <div className="space-y-3">
+            <AuthPasswordField
               id="register-password"
+              label="Password"
+              icon={Lock}
               autoComplete="new-password"
               placeholder="At least 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="h-11 rounded-lg border-border/80 pl-10 text-[15px] shadow-sm"
             />
+            <PasswordStrength password={password} />
           </div>
-          <PasswordStrength password={password} />
-        </div>
 
-        <p className="text-[13px] leading-relaxed text-muted-foreground">
-          By registering you can use team workspaces, sync collections, and keep execution history in one
-          place.
-        </p>
+          <p className="rounded-xl border border-border/60 bg-muted/[0.35] px-4 py-3 text-[13px] leading-relaxed text-muted-foreground dark:bg-muted/15">
+            Your workspace starts private. Invite teammates later from workspace settings when you are ready
+            to collaborate.
+          </p>
 
-        <Button
-          type="submit"
-          size="lg"
-          className={cn(
-            'w-full rounded-lg text-[15px] font-semibold shadow-md shadow-primary/15',
-            'transition-shadow hover:shadow-lg hover:shadow-primary/10'
-          )}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating account…
-            </>
-          ) : (
-            'Create account with email'
-          )}
-        </Button>
-      </form>
+          <Button
+            type="submit"
+            size="lg"
+            disabled={isLoading}
+            className={cn(
+              'relative h-12 w-full overflow-hidden rounded-xl text-[15px] font-semibold tracking-tight',
+              'bg-gradient-to-r from-primary to-primary shadow-[0_14px_40px_-16px_hsl(var(--primary))]',
+              'transition-[filter,transform,box-shadow] duration-200 hover:brightness-[1.06] active:scale-[0.99]',
+              'disabled:opacity-60 disabled:hover:brightness-100 disabled:active:scale-100'
+            )}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating workspace…
+              </>
+            ) : (
+              'Create workspace'
+            )}
+          </Button>
+        </form>
       </div>
     </AuthPageLayout>
   );

@@ -1,12 +1,12 @@
 export function AuthDivider() {
   return (
-    <div className="relative py-1" aria-hidden>
+    <div className="relative py-2" aria-hidden>
       <div className="absolute inset-0 flex items-center">
-        <span className="w-full border-t border-border/60" />
+        <span className="h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
       </div>
-      <div className="relative flex justify-center text-[13px]">
-        <span className="bg-background px-4 text-muted-foreground font-medium">
-          Or continue with email
+      <div className="relative flex justify-center">
+        <span className="rounded-full border border-border/50 bg-background px-5 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground shadow-sm">
+          Or email
         </span>
       </div>
     </div>

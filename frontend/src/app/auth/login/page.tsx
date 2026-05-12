@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { AuthPageLayout } from '@/components/auth/AuthPageLayout';
-import { PasswordInput } from '@/components/auth/PasswordInput';
+import { AuthPasswordField, AuthTextField } from '@/components/auth/AuthField';
 import { GoogleAuthSection } from '@/components/auth/GoogleAuthSection';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -45,80 +44,69 @@ export default function LoginPage() {
 
   return (
     <AuthPageLayout
-      title="Sign in"
-      description="Use your workspace account to sync collections, environments, and history across devices."
+      eyebrow="Secure access"
+      title="Sign in to your workspace"
+      description="Pick up where you left off — collections, environments, proxy runs, and history stay tied to your account."
       footer={
         <>
           Need an account?{' '}
           <Link
             href="/auth/register"
-            className="font-semibold text-primary underline-offset-4 hover:underline"
+            className="font-semibold text-primary underline-offset-[5px] transition-colors hover:text-primary/85 hover:underline"
           >
-            Create one
+            Create one free
           </Link>
         </>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-8">
         <GoogleAuthSection />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <label htmlFor="login-email" className="text-sm font-medium text-foreground">
-            Email
-          </label>
-          <div className="relative">
-            <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="login-email"
-              type="email"
-              autoComplete="email"
-              placeholder="name@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="h-11 rounded-lg border-border/80 pl-10 text-[15px] shadow-sm"
-            />
-          </div>
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <AuthTextField
+            id="login-email"
+            label="Work email"
+            type="email"
+            icon={Mail}
+            autoComplete="email"
+            placeholder="you@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-        <div className="space-y-2">
-          <label htmlFor="login-password" className="text-sm font-medium text-foreground">
-            Password
-          </label>
-          <div className="relative">
-            <Lock className="pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <PasswordInput
-              id="login-password"
-              autoComplete="current-password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="h-11 rounded-lg border-border/80 pl-10 text-[15px] shadow-sm"
-            />
-          </div>
-        </div>
+          <AuthPasswordField
+            id="login-password"
+            label="Password"
+            icon={Lock}
+            autoComplete="current-password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-        <Button
-          type="submit"
-          size="lg"
-          className={cn(
-            'w-full rounded-lg text-[15px] font-semibold shadow-md shadow-primary/15',
-            'transition-shadow hover:shadow-lg hover:shadow-primary/10'
-          )}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in…
-            </>
-          ) : (
-            'Sign in with email'
-          )}
-        </Button>
-      </form>
+          <Button
+            type="submit"
+            size="lg"
+            disabled={isLoading}
+            className={cn(
+              'relative h-12 w-full overflow-hidden rounded-xl text-[15px] font-semibold tracking-tight',
+              'bg-gradient-to-r from-primary to-primary shadow-[0_14px_40px_-16px_hsl(var(--primary))]',
+              'transition-[filter,transform,box-shadow] duration-200 hover:brightness-[1.06] active:scale-[0.99]',
+              'disabled:opacity-60 disabled:hover:brightness-100 disabled:active:scale-100'
+            )}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in…
+              </>
+            ) : (
+              'Continue with email'
+            )}
+          </Button>
+        </form>
       </div>
     </AuthPageLayout>
   );

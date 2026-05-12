@@ -44,9 +44,9 @@ export function PasswordStrength({ password }: { password: string }) {
           />
         ))}
       </div>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-        Strength:{' '}
-        <span className="text-foreground normal-case tracking-normal">{label}</span>
+      <p className="text-[12px] font-medium text-muted-foreground">
+        Password strength:{' '}
+        <span className="font-semibold text-foreground">{label}</span>
       </p>
     </div>
   );
