@@ -10,6 +10,7 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
@@ -27,6 +28,15 @@ export const useAuthStore = create<AuthState>()(
         const response = await authApi.login({ email, password });
         const { user, token } = response.data;
         
+        localStorage.setItem('token', token);
+        set({ user, token, isAuthenticated: true });
+        await useWorkspaceStore.getState().fetchWorkspaces(user?.defaultWorkspaceId);
+      },
+
+      loginWithGoogle: async (credential: string) => {
+        const response = await authApi.googleAuth({ credential });
+        const { user, token } = response.data;
+
         localStorage.setItem('token', token);
         set({ user, token, isAuthenticated: true });
         await useWorkspaceStore.getState().fetchWorkspaces(user?.defaultWorkspaceId);

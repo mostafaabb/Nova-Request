@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { AuthPageLayout } from '@/components/auth/AuthPageLayout';
 import { PasswordInput } from '@/components/auth/PasswordInput';
 import { PasswordStrength } from '@/components/auth/PasswordStrength';
+import { GoogleAuthSection } from '@/components/auth/GoogleAuthSection';
 import { User, Mail, Lock, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
@@ -31,10 +32,18 @@ export default function RegisterPage() {
 
     try {
       await register(email, password, name);
-      toast.success('Account created!');
+      toast.success('Account created');
       router.push('/dashboard');
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Registration failed');
+    } catch (error: unknown) {
+      const msg =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { error?: string } } }).response?.data?.error ===
+          'string'
+          ? (error as { response: { data: { error: string } } }).response.data.error
+          : 'Registration failed';
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -42,31 +51,31 @@ export default function RegisterPage() {
 
   return (
     <AuthPageLayout
-      title="Create your workspace"
-      description="One account unlocks collections, shared docs, environments, and team workspaces."
+      title="Create your account"
+      description="Join with Google or email. One profile powers shared workspaces, environments, and request history."
       mobileTagline="Start testing APIs with structure and speed."
       footer={
         <>
-          Already registered?{' '}
+          Already have an account?{' '}
           <Link
             href="/auth/login"
-            className="font-bold text-primary hover:underline underline-offset-4"
+            className="font-semibold text-primary underline-offset-4 hover:underline"
           >
             Sign in
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-1.5">
-          <label
-            htmlFor="register-name"
-            className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground"
-          >
+      <div className="space-y-6">
+        <GoogleAuthSection />
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-2">
+          <label htmlFor="register-name" className="text-sm font-medium text-foreground">
             Full name
           </label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="register-name"
               type="text"
@@ -75,42 +84,37 @@ export default function RegisterPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="h-11 pl-10"
+              minLength={2}
+              className="h-11 rounded-lg border-border/80 pl-10 text-[15px] shadow-sm"
             />
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label
-            htmlFor="register-email"
-            className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground"
-          >
+        <div className="space-y-2">
+          <label htmlFor="register-email" className="text-sm font-medium text-foreground">
             Work email
           </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="register-email"
               type="email"
               autoComplete="email"
-              placeholder="you@company.com"
+              placeholder="name@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-11 pl-10"
+              className="h-11 rounded-lg border-border/80 pl-10 text-[15px] shadow-sm"
             />
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label
-            htmlFor="register-password"
-            className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground"
-          >
+        <div className="space-y-2">
+          <label htmlFor="register-password" className="text-sm font-medium text-foreground">
             Password
           </label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-[1]" />
+            <Lock className="pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <PasswordInput
               id="register-password"
               autoComplete="new-password"
@@ -119,35 +123,37 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="h-11 pl-10"
+              className="h-11 rounded-lg border-border/80 pl-10 text-[15px] shadow-sm"
             />
           </div>
           <PasswordStrength password={password} />
         </div>
 
-        <p className="text-[11px] text-muted-foreground leading-relaxed -mt-1">
-          By creating an account you can use workspaces, sync collections, and keep request history
-          in one place.
+        <p className="text-[13px] leading-relaxed text-muted-foreground">
+          By registering you can use team workspaces, sync collections, and keep execution history in one
+          place.
         </p>
 
         <Button
           type="submit"
+          size="lg"
           className={cn(
-            'w-full h-11 font-bold shadow-md shadow-primary/20',
-            'hover:shadow-lg hover:shadow-primary/15 transition-shadow'
+            'w-full rounded-lg text-[15px] font-semibold shadow-md shadow-primary/15',
+            'transition-shadow hover:shadow-lg hover:shadow-primary/10'
           )}
           disabled={isLoading}
         >
           {isLoading ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Creating account…
             </>
           ) : (
-            'Create account'
+            'Create account with email'
           )}
         </Button>
       </form>
+      </div>
     </AuthPageLayout>
   );
 }

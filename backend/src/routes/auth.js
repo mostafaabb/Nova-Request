@@ -20,6 +20,12 @@ router.post('/login', [
   validate
 ], authController.login);
 
+// Google Sign-In (ID token from Google Identity Services)
+router.post('/google', [
+  body('credential').isString().notEmpty().withMessage('Google credential required'),
+  validate
+], authController.googleAuth);
+
 // Get current user
 router.get('/me', authenticate, authController.me);
 

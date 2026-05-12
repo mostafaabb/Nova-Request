@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthPageLayout } from '@/components/auth/AuthPageLayout';
 import { PasswordInput } from '@/components/auth/PasswordInput';
+import { GoogleAuthSection } from '@/components/auth/GoogleAuthSection';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
@@ -25,10 +26,18 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      toast.success('Welcome back!');
+      toast.success('Welcome back');
       router.push('/dashboard');
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Login failed');
+    } catch (error: unknown) {
+      const msg =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { error?: string } } }).response?.data?.error ===
+          'string'
+          ? (error as { response: { data: { error: string } } }).response.data.error
+          : 'Login failed';
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -36,52 +45,49 @@ export default function LoginPage() {
 
   return (
     <AuthPageLayout
-      title="Welcome back"
-      description="Sign in to sync collections, environments, and request history across your workspace."
+      title="Sign in"
+      description="Use your workspace account to sync collections, environments, and history across devices."
       footer={
         <>
-          Don&apos;t have an account?{' '}
+          Need an account?{' '}
           <Link
             href="/auth/register"
-            className="font-bold text-primary hover:underline underline-offset-4"
+            className="font-semibold text-primary underline-offset-4 hover:underline"
           >
             Create one
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-1.5">
-          <label
-            htmlFor="login-email"
-            className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground"
-          >
+      <div className="space-y-6">
+        <GoogleAuthSection />
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-2">
+          <label htmlFor="login-email" className="text-sm font-medium text-foreground">
             Email
           </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="login-email"
               type="email"
               autoComplete="email"
-              placeholder="you@company.com"
+              placeholder="name@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-11 pl-10"
+              className="h-11 rounded-lg border-border/80 pl-10 text-[15px] shadow-sm"
             />
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label
-            htmlFor="login-password"
-            className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground"
-          >
+        <div className="space-y-2">
+          <label htmlFor="login-password" className="text-sm font-medium text-foreground">
             Password
           </label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-[1]" />
+            <Lock className="pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <PasswordInput
               id="login-password"
               autoComplete="current-password"
@@ -89,29 +95,31 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-11 pl-10"
+              className="h-11 rounded-lg border-border/80 pl-10 text-[15px] shadow-sm"
             />
           </div>
         </div>
 
         <Button
           type="submit"
+          size="lg"
           className={cn(
-            'w-full h-11 font-bold shadow-md shadow-primary/20',
-            'hover:shadow-lg hover:shadow-primary/15 transition-shadow'
+            'w-full rounded-lg text-[15px] font-semibold shadow-md shadow-primary/15',
+            'transition-shadow hover:shadow-lg hover:shadow-primary/10'
           )}
           disabled={isLoading}
         >
           {isLoading ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Signing in…
             </>
           ) : (
-            'Sign in'
+            'Sign in with email'
           )}
         </Button>
       </form>
+      </div>
     </AuthPageLayout>
   );
 }

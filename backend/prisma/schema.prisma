@@ -12,7 +12,8 @@ datasource db {
 model User {
   id           String         @id @default(uuid())
   email        String         @unique
-  password     String
+  password     String?
+  googleId     String?        @unique @map("google_id")
   name         String
   defaultWorkspaceId String?  @map("default_workspace_id")
   createdAt    DateTime       @default(now()) @map("created_at")
