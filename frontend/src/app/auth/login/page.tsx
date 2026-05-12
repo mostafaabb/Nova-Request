@@ -6,7 +6,11 @@ import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { AuthPageLayout } from '@/components/auth/AuthPageLayout';
+import { PasswordInput } from '@/components/auth/PasswordInput';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,46 +35,83 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Nova Request</h1>
-          <p className="text-muted-foreground mt-2">Sign in to your account</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
+    <AuthPageLayout
+      title="Welcome back"
+      description="Sign in to sync collections, environments, and request history across your workspace."
+      footer={
+        <>
+          Don&apos;t have an account?{' '}
+          <Link
+            href="/auth/register"
+            className="font-bold text-primary hover:underline underline-offset-4"
+          >
+            Create one
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-1.5">
+          <label
+            htmlFor="login-email"
+            className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground"
+          >
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
+              id="login-email"
               type="email"
-              placeholder="you@example.com"
+              autoComplete="email"
+              placeholder="you@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="h-11 pl-10"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
-            <Input
-              type="password"
-              placeholder="••••••••"
+        </div>
+
+        <div className="space-y-1.5">
+          <label
+            htmlFor="login-password"
+            className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground"
+          >
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-[1]" />
+            <PasswordInput
+              id="login-password"
+              autoComplete="current-password"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="h-11 pl-10"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Sign In'}
-          </Button>
-        </form>
+        </div>
 
-        <p className="text-center text-sm text-muted-foreground">
-          Don't have an account?{' '}
-          <Link href="/auth/register" className="text-primary hover:underline">
-            Sign up
-          </Link>
-        </p>
-      </div>
-    </div>
+        <Button
+          type="submit"
+          className={cn(
+            'w-full h-11 font-bold shadow-md shadow-primary/20',
+            'hover:shadow-lg hover:shadow-primary/15 transition-shadow'
+          )}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Signing in…
+            </>
+          ) : (
+            'Sign in'
+          )}
+        </Button>
+      </form>
+    </AuthPageLayout>
   );
 }
