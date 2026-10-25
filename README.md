@@ -29,13 +29,12 @@ The exact capabilities depend on the current implementation. Refer to the source
 
 Nova Request uses a web application architecture. The exact stack and package versions should be taken from the repository's dependency files.
 
-- **Frontend:** See the frontend package configuration.
-- **Backend:** See the server-side application and dependency configuration.
-- **API communication:** HTTP and REST API workflows.
-- **Authentication and sharing:** Application-specific authentication and sharing logic.
-- **Deployment:** See the repository's deployment documentation.
-
-I prefer documenting the technologies that are actually used in the project rather than listing tools simply because they are common in modern development.
+- **Frontend:** Next.js, React, TypeScript, and Tailwind CSS.
+- **Backend:** Node.js and Express.js for server-side logic and API handling.
+- **Database & ORM:** PostgreSQL and Prisma ORM for data persistence and database operations.
+- **API Testing:** HTTP request execution, response inspection, and API workflow management.
+- **Authentication & State Management:** JWT-based authentication, bcryptjs, and Zustand.
+- **Deployment:** Deployed web application with a live demo at [nova-request.com](https://nova-request.com).
 
 ## How It Works
 
