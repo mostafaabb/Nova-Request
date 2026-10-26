@@ -1,392 +1,243 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useCollectionStore } from '@/store/collectionStore';
-import { useRequestStore } from '@/store/requestStore';
-import { useAuthStore } from '@/store/authStore';
-import { cn, getMethodColor } from '@/lib/utils';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
-  FolderPlus,
-  Folder,
-  FolderOpen,
-  ChevronRight,
-  ChevronDown,
-  Search,
-  Plus,
-  MoreHorizontal,
-  Trash2,
-  Edit,
-  Share2,
-  Copy,
-  Download,
-  Upload,
+  Clock3,
+  Globe2,
+  LayoutDashboard,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings2,
+  SquarePen,
+  X,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { collectionApi } from '@/lib/api';
-import { downloadJson } from '@/lib/utils';
+import { useEnvironmentStore } from '@/store/environmentStore';
+import { useRequestStore } from '@/store/requestStore';
+import { useWorkspaceStore } from '@/store/workspaceStore';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
+import { NovaMark } from '@/components/brand/NovaLogo';
+import { SidebarCollections } from './SidebarCollections';
+import { cn } from '@/lib/utils';
 
-export function Sidebar() {
-  const router = useRouter();
+interface SidebarProps {
+  collapsed?: boolean;
+  isMobile?: boolean;
+  onCloseMobile?: () => void;
+  onToggleCollapsed?: () => void;
+  onOpenEnvironment: () => void;
+  onOpenWorkspace: () => void;
+  onNavigate?: () => void;
+}
+
+const NAV_ITEMS = [
+  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { href: '/dashboard/request', label: 'Request builder', icon: SquarePen },
+  { href: '/dashboard/history', label: 'History', icon: Clock3 },
+];
+
+export function Sidebar({
+  collapsed = false,
+  isMobile = false,
+  onCloseMobile,
+  onToggleCollapsed,
+  onOpenEnvironment,
+  onOpenWorkspace,
+  onNavigate,
+}: SidebarProps) {
   const pathname = usePathname();
-  const { user, logout } = useAuthStore();
+  const tabs = useRequestStore((state) => state.tabs);
+  const activeWorkspace = useWorkspaceStore((state) =>
+    state.workspaces.find((workspace) => workspace.id === state.activeWorkspaceId)
+  );
   const {
-    collections,
-    currentCollection,
-    currentEndpoint,
-    fetchCollections,
-    fetchCollection,
-    createCollection,
-    deleteCollection,
-    selectEndpoint,
-    deleteEndpoint,
-    duplicateEndpoint,
-    generateShareLink,
-  } = useCollectionStore();
-  const { tabs, setActiveTab, addTab } = useRequestStore();
+    environments,
+    activeEnvironmentId,
+    setActiveEnvironment,
+  } = useEnvironmentStore();
 
-  const [search, setSearch] = useState('');
-  const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set());
-  const [loadingCollectionId, setLoadingCollectionId] = useState<string | null>(null);
-  const [showNewCollectionModal, setShowNewCollectionModal] = useState(false);
-  const [newCollectionName, setNewCollectionName] = useState('');
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importData, setImportData] = useState('');
-
-  useEffect(() => {
-    fetchCollections();
-  }, [fetchCollections]);
-
-  const toggleCollection = async (collectionId: string) => {
-    const newExpanded = new Set(expandedCollections);
-    if (newExpanded.has(collectionId)) {
-      newExpanded.delete(collectionId);
-      setExpandedCollections(newExpanded);
-    } else {
-      newExpanded.add(collectionId);
-      setExpandedCollections(newExpanded);
-      setLoadingCollectionId(collectionId);
-      try {
-        await fetchCollection(collectionId);
-      } finally {
-        setLoadingCollectionId(null);
-      }
-    }
-  };
-
-  const handleCreateCollection = async () => {
-    if (!newCollectionName.trim()) return;
-    
-    try {
-      await createCollection(newCollectionName);
-      setNewCollectionName('');
-      setShowNewCollectionModal(false);
-      toast.success('Collection created');
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to create collection');
-    }
-  };
-
-  const handleDeleteCollection = async (id: string) => {
-    if (!confirm('Delete this collection and all its endpoints?')) return;
-    
-    try {
-      await deleteCollection(id);
-      toast.success('Collection deleted');
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to delete');
-    }
-  };
-
-  const handleSelectEndpoint = (endpoint: any) => {
-    selectEndpoint(endpoint);
-    // Find if a tab is already open for this endpoint
-    const existingTab = tabs.find(t => t.name === endpoint.name && t.url === endpoint.url);
-    if (existingTab) {
-      setActiveTab(existingTab.id);
-    } else {
-      addTab(endpoint);
-    }
-  };
-
-  const handleShareCollection = async (id: string) => {
-    try {
-      const shareUrl = await generateShareLink(id);
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('Share link copied to clipboard');
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to generate link');
-    }
-  };
-
-  const handleExportCollection = async (id: string) => {
-    try {
-      const response = await collectionApi.export(id);
-      downloadJson(response.data, `collection-${id}.json`);
-      toast.success('Collection exported');
-    } catch (error: any) {
-      toast.error('Failed to export');
-    }
-  };
-
-  const handleImport = async () => {
-    try {
-      const data = JSON.parse(importData);
-      await collectionApi.import(data);
-      await fetchCollections();
-      setShowImportModal(false);
-      setImportData('');
-      toast.success('Collection imported');
-    } catch (error: any) {
-      toast.error('Invalid import data');
-    }
-  };
-
-  const filteredCollections = collections.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase())
+  const activeEnvironment = environments.find(
+    (environment) => environment.id === activeEnvironmentId
   );
 
   return (
-    <aside className="w-full h-full min-w-0 rounded-lg border border-border/80 bg-background/75 shadow-sm backdrop-blur flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="p-4 border-b border-border/80 bg-muted/25">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground">Collections</h1>
-            <p className="text-xs text-muted-foreground truncate mt-1">{user?.email}</p>
-          </div>
-          <div className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">
-            API
-          </div>
-        </div>
-      </div>
-
-      {/* Search & Actions */}
-      <div className="p-3 border-b border-border/80 space-y-3 bg-background/40">
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search collections..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 h-9 bg-muted/30"
-          />
-        </div>
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-1 bg-primary/10 text-primary hover:bg-primary/20"
-            onClick={() => setShowNewCollectionModal(true)}
-          >
-            <FolderPlus className="h-4 w-4 mr-1" />
-            New
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowImportModal(true)}
-          >
-            <Upload className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Collections List */}
-      <div className="flex-1 overflow-auto p-3">
-        {filteredCollections.length === 0 ? (
-          <div className="text-center text-muted-foreground py-12 text-sm rounded-lg border border-dashed border-border bg-muted/20">
-            No collections yet
-          </div>
+    <aside
+      className={cn(
+        'flex h-full min-h-0 flex-col border-border bg-sidebar',
+        isMobile ? 'w-[min(88vw,20rem)] border-r shadow-2xl' : 'border-r'
+      )}
+      aria-label="Workspace navigation"
+    >
+      <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
+        {isMobile ? (
+          <>
+            <NovaMark size={28} />
+            <span className="text-[13px] font-semibold">Nova Request</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-auto h-8 w-8"
+              onClick={onCloseMobile}
+              aria-label="Close navigation"
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </Button>
+          </>
         ) : (
-          <div className="space-y-1">
-            {filteredCollections.map((collection) => {
-              const isExpanded = expandedCollections.has(collection.id);
-              const isActive = currentCollection?.id === collection.id;
-
-              return (
-                <div key={collection.id}>
-                  <div
-                    className={cn(
-                      'flex items-center gap-2 px-2.5 py-2 rounded-md cursor-pointer group transition-colors',
-                      isActive ? 'bg-accent text-accent-foreground shadow-sm' : 'hover:bg-accent/50'
-                    )}
-                  >
-                    <button onClick={() => toggleCollection(collection.id)}>
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </button>
-                    {isExpanded ? (
-                      <FolderOpen className="h-4 w-4 text-primary" />
-                    ) : (
-                      <Folder className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    <span
-                      className="flex-1 text-sm font-semibold truncate"
-                      onClick={() => toggleCollection(collection.id)}
-                    >
-                      {collection.name}
-                    </span>
-                    <span className="text-[10px] font-bold text-muted-foreground rounded-full bg-muted px-1.5 py-0.5">
-                      {collection._count?.endpoints || 0}
-                    </span>
-                    <div className="opacity-0 group-hover:opacity-100 flex">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShareCollection(collection.id);
-                        }}
-                        className="p-1 hover:bg-background rounded"
-                      >
-                        <Share2 className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleExportCollection(collection.id);
-                        }}
-                        className="p-1 hover:bg-background rounded"
-                      >
-                        <Download className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteCollection(collection.id);
-                        }}
-                        className="p-1 hover:bg-background rounded text-destructive"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {isExpanded && (
-                    <div className="ml-6 mt-1 space-y-0.5 min-h-[2rem]">
-                      {loadingCollectionId === collection.id ? (
-                        <div className="text-[11px] text-muted-foreground px-2 py-2 font-medium">
-                          Loading endpoints…
-                        </div>
-                      ) : (collection.endpoints?.length ?? 0) === 0 ? (
-                        <div className="text-[11px] text-muted-foreground px-2 py-2">
-                          {(collection._count?.endpoints ?? 0) === 0
-                            ? 'No requests in this collection yet.'
-                            : 'Could not load requests. Try collapsing and expanding again.'}
-                        </div>
-                      ) : (
-                        collection.endpoints!.map((endpoint) => (
-                          <div
-                            key={endpoint.id}
-                            onClick={() => handleSelectEndpoint(endpoint)}
-                            className={cn(
-                              'flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer text-sm group border border-transparent transition-colors',
-                              currentEndpoint?.id === endpoint.id
-                                ? 'bg-primary/10 border-primary/20'
-                                : 'hover:bg-accent/50'
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                'text-xs font-mono font-bold w-[3.25rem] shrink-0',
-                                getMethodColor(endpoint.method)
-                              )}
-                            >
-                              {endpoint.method}
-                            </span>
-                            <span className="flex-1 truncate min-w-0">{endpoint.name}</span>
-                            <div className="opacity-0 group-hover:opacity-100 flex shrink-0">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  duplicateEndpoint(endpoint.id);
-                                  toast.success('Endpoint duplicated');
-                                }}
-                                className="p-1 hover:bg-background rounded"
-                              >
-                                <Copy className="h-3 w-3" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteEndpoint(endpoint.id);
-                                  toast.success('Endpoint deleted');
-                                }}
-                                className="p-1 hover:bg-background rounded text-destructive"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <>
+            <button
+              type="button"
+              onClick={onOpenWorkspace}
+              className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+              title="Workspace settings"
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-3xs font-semibold uppercase text-muted-foreground">
+                {(activeWorkspace?.name || 'Nova').slice(0, 2)}
+              </span>
+              {!collapsed ? (
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-semibold">
+                    {activeWorkspace?.name || 'Workspace'}
+                  </span>
+                  <span className="block truncate text-3xs capitalize text-muted-foreground">
+                    {activeWorkspace?.role || 'No workspace'}
+                    {activeWorkspace ? ` · ${activeWorkspace.memberCount} members` : ''}
+                  </span>
+                </span>
+              ) : null}
+            </button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0 text-muted-foreground"
+              onClick={onToggleCollapsed}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? (
+                <PanelLeftOpen className="h-3.5 w-3.5" aria-hidden />
+              ) : (
+                <PanelLeftClose className="h-3.5 w-3.5" aria-hidden />
+              )}
+            </Button>
+          </>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-border/80 bg-muted/20">
-        <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground" onClick={logout}>
-          Sign Out
-        </Button>
+      <nav className="shrink-0 space-y-0.5 p-2" aria-label="Primary">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const isActive =
+            item.href === '/dashboard'
+              ? pathname === '/dashboard'
+              : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              aria-current={isActive ? 'page' : undefined}
+              title={collapsed ? item.label : undefined}
+              className={cn(
+                'relative flex h-9 items-center gap-2.5 rounded-md px-2.5 text-xs font-medium transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
+                isActive
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground',
+                collapsed && 'justify-center px-0'
+              )}
+            >
+              {isActive ? (
+                <span
+                  className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-r-full bg-primary"
+                  aria-hidden
+                />
+              ) : null}
+              <Icon className="h-4 w-4 shrink-0" aria-hidden />
+              {!collapsed ? <span className="truncate">{item.label}</span> : null}
+              {!collapsed && item.href === '/dashboard/request' && tabs.length > 0 ? (
+                <span className="ml-auto rounded bg-surface-3 px-1.5 py-0.5 text-3xs tabular-nums text-muted-foreground">
+                  {tabs.length}
+                </span>
+              ) : null}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="mx-3 h-px shrink-0 bg-border" />
+
+      <SidebarCollections
+        collapsed={collapsed}
+        onExpandSidebar={onToggleCollapsed}
+        onNavigate={onNavigate}
+      />
+
+      <div className="shrink-0 border-t border-border p-2.5">
+        {collapsed ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-full text-muted-foreground"
+            onClick={onOpenEnvironment}
+            aria-label="Environment variables"
+            title="Environment variables"
+          >
+            <Globe2 className="h-4 w-4" aria-hidden />
+          </Button>
+        ) : (
+          <>
+            <div className="mb-1 flex items-center justify-between px-1">
+              <label
+                htmlFor="sidebar-environment"
+                className="text-2xs font-medium uppercase tracking-[0.14em] text-muted-foreground"
+              >
+                Environment
+              </label>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={onOpenEnvironment}
+                aria-label="Manage environment variables"
+                title="Manage variables"
+              >
+                <Settings2 className="h-3.5 w-3.5" aria-hidden />
+              </Button>
+            </div>
+            <Select
+              id="sidebar-environment"
+              value={activeEnvironmentId || 'globals'}
+              onChange={(event) =>
+                setActiveEnvironment(event.target.value === 'globals' ? null : event.target.value)
+              }
+              className="h-8 bg-surface-2/40 text-xs"
+              wrapperClassName="w-full"
+              aria-label="Active environment"
+            >
+              <option value="globals">Globals only</option>
+              {environments
+                .filter((environment) => environment.id !== 'globals')
+                .map((environment) => (
+                  <option key={environment.id} value={environment.id}>
+                    {environment.name}
+                  </option>
+                ))}
+            </Select>
+            {activeEnvironment ? (
+              <p className="mt-1.5 truncate px-1 text-3xs text-muted-foreground">
+                {activeEnvironment.variables.filter((variable) => variable.key && variable.enabled).length}{' '}
+                active variables
+              </p>
+            ) : (
+              <p className="mt-1.5 px-1 text-3xs text-muted-foreground">
+                Global variables still apply.
+              </p>
+            )}
+          </>
+        )}
       </div>
-
-      {/* New Collection Modal */}
-      <Modal
-        isOpen={showNewCollectionModal}
-        onClose={() => setShowNewCollectionModal(false)}
-        title="New Collection"
-      >
-        <div className="space-y-4">
-          <Input
-            placeholder="Collection name"
-            value={newCollectionName}
-            onChange={(e) => setNewCollectionName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreateCollection()}
-            autoFocus
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setShowNewCollectionModal(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateCollection}>Create</Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Import Modal */}
-      <Modal
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        title="Import Collection"
-      >
-        <div className="space-y-4">
-          <textarea
-            placeholder="Paste exported JSON here..."
-            value={importData}
-            onChange={(e) => setImportData(e.target.value)}
-            className="w-full h-48 p-2 rounded-md border border-input bg-background font-mono text-sm"
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setShowImportModal(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleImport}>Import</Button>
-          </div>
-        </div>
-      </Modal>
     </aside>
   );
 }

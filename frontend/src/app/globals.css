@@ -4,126 +4,286 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 8%;
-    --muted: 214 32% 93%;
-    --muted-foreground: 215 16% 40%;
-    --border: 214 30% 86%;
-    --input: 214 30% 86%;
-    --ring: 188 94% 38%;
-    --primary: 188 94% 38%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 222 47% 11%;
-    --accent: 188 80% 91%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --success: 142 76% 36%;
-    --success-foreground: 210 40% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
-    --radius: 0.5rem;
+    --background: 220 27% 97%;
+    --foreground: 226 30% 13%;
+
+    --surface: 0 0% 100%;
+    --surface-2: 220 22% 96%;
+    --surface-3: 220 18% 92.5%;
+    --sidebar: 220 25% 98.5%;
+
+    --muted: 220 20% 94%;
+    --muted-foreground: 222 10% 42%;
+
+    --border: 220 16% 87%;
+    --border-strong: 220 14% 78%;
+    --input: 220 16% 82%;
+    --ring: 252 68% 54%;
+
+    --primary: 252 68% 54%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 252 72% 48%;
+
+    --secondary: 220 18% 93%;
+    --secondary-foreground: 226 30% 16%;
+
+    --accent: 252 64% 95%;
+    --accent-foreground: 252 60% 38%;
+
+    --destructive: 0 68% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 58% 34%;
+    --success-foreground: 0 0% 100%;
+    --warning: 34 92% 40%;
+    --warning-foreground: 0 0% 100%;
+
+    --code-bg: 220 27% 96%;
+    --json-key: 252 62% 42%;
+    --json-string: 154 55% 30%;
+    --json-number: 24 82% 40%;
+    --json-boolean: 201 80% 34%;
+    --json-null: 0 62% 46%;
+
+    --radius: 0.625rem;
+    color-scheme: light;
   }
 
   .dark {
-    --background: 218 33% 7%;
-    --foreground: 204 33% 97%;
-    --muted: 218 26% 13%;
-    --muted-foreground: 215 17% 68%;
-    --border: 218 20% 19%;
-    --input: 218 20% 22%;
-    --ring: 188 100% 43%;
-    --primary: 188 100% 43%;
-    --primary-foreground: 216 45% 8%;
-    --secondary: 218 26% 16%;
-    --secondary-foreground: 204 33% 97%;
-    --accent: 188 90% 11%;
-    --accent-foreground: 188 100% 82%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --success: 142 76% 36%;
-    --success-foreground: 210 40% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
-  }
-}
+    --background: 228 14% 5%;
+    --foreground: 220 20% 96%;
 
-@layer base {
+    --surface: 228 13% 7.5%;
+    --surface-2: 228 12% 10%;
+    --surface-3: 228 11% 13%;
+    --sidebar: 228 14% 6%;
+
+    --muted: 228 10% 14%;
+    --muted-foreground: 222 11% 65%;
+
+    --border: 228 10% 17%;
+    --border-strong: 228 10% 24%;
+    --input: 228 10% 20%;
+    --ring: 250 95% 74%;
+
+    --primary: 250 95% 72%;
+    --primary-foreground: 250 45% 10%;
+    --primary-hover: 250 95% 78%;
+
+    --secondary: 228 11% 13%;
+    --secondary-foreground: 220 20% 96%;
+
+    --accent: 249 36% 16%;
+    --accent-foreground: 249 90% 86%;
+
+    --destructive: 0 72% 62%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 154 66% 52%;
+    --success-foreground: 152 50% 8%;
+    --warning: 38 94% 62%;
+    --warning-foreground: 30 60% 8%;
+
+    --code-bg: 228 16% 4.5%;
+    --json-key: 249 95% 80%;
+    --json-string: 152 58% 64%;
+    --json-number: 38 92% 68%;
+    --json-boolean: 199 82% 70%;
+    --json-null: 0 78% 70%;
+
+    color-scheme: dark;
+  }
+
   * {
     @apply border-border;
   }
+
+  html {
+    @apply bg-background;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     min-width: 320px;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    text-rendering: optimizeLegibility;
   }
 
-  body::before {
-    content: "";
-    position: fixed;
+  ::selection {
+    background: hsl(var(--primary) / 0.3);
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.85);
+    outline-offset: 2px;
+  }
+
+  input[type='checkbox'] {
+    accent-color: hsl(var(--primary));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .surface-panel {
+    @apply rounded-xl border border-border bg-surface shadow-panel;
+  }
+
+  .surface-subtle {
+    @apply rounded-lg border border-border bg-surface-2;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-[13px] font-medium text-foreground;
+  }
+
+  .field-hint {
+    @apply mt-1.5 text-xs leading-relaxed text-muted-foreground;
+  }
+
+  .field-error {
+    @apply mt-1.5 text-xs font-medium leading-relaxed text-destructive;
+  }
+
+  .code-block {
+    @apply rounded-lg border border-border bg-[hsl(var(--code-bg))] font-mono text-xs leading-relaxed;
+  }
+
+  .kbd {
+    @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-border bg-surface-2 px-1.5 font-mono text-[10px] font-medium text-muted-foreground;
+  }
+
+  .divider-label {
+    @apply relative flex items-center gap-3 text-2xs font-medium uppercase tracking-[0.14em] text-muted-foreground;
+  }
+
+  .divider-label::before,
+  .divider-label::after {
+    @apply h-px flex-1 bg-border;
+    content: '';
+  }
+
+  .app-grid-background {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.38) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.38) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 72%);
+  }
+
+  .json-viewer {
+    @apply font-mono text-xs leading-6;
+    color: hsl(var(--foreground) / 0.88);
+  }
+
+  /* HTTP method text colors */
+  .method-get {
+    @apply text-emerald-600 dark:text-emerald-400;
+  }
+  .method-post {
+    @apply text-sky-600 dark:text-sky-400;
+  }
+  .method-put {
+    @apply text-amber-600 dark:text-amber-400;
+  }
+  .method-patch {
+    @apply text-violet-600 dark:text-violet-400;
+  }
+  .method-delete {
+    @apply text-rose-600 dark:text-rose-400;
+  }
+  .method-head {
+    @apply text-cyan-600 dark:text-cyan-400;
+  }
+  .method-options {
+    @apply text-slate-600 dark:text-slate-400;
+  }
+
+  /* Response status badges */
+  .status-2xx {
+    @apply border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300;
+  }
+  .status-3xx {
+    @apply border border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300;
+  }
+  .status-4xx {
+    @apply border border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300;
+  }
+  .status-5xx {
+    @apply border border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300;
+  }
+}
+
+@layer utilities {
+  .mono {
+    font-family: theme('fontFamily.mono');
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border-strong)) transparent;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-shimmer::after {
+    position: absolute;
     inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      linear-gradient(135deg, hsl(var(--primary) / 0.12), transparent 30%),
-      radial-gradient(circle at 82% 8%, hsl(166 88% 42% / 0.12), transparent 28%),
-      linear-gradient(hsl(var(--background)), hsl(var(--background)));
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--foreground) / 0.045),
+      transparent
+    );
+    animation: shimmer 1.8s infinite;
+    content: '';
   }
 }
 
-/* JSON Viewer Styles */
-.json-viewer {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+  background-color: hsl(var(--border-strong));
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+  background-color: hsl(var(--muted-foreground) / 0.55);
 }
 
-.surface-panel {
-  @apply border border-border bg-background/90 shadow-sm;
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
-
-.glass-panel {
-  @apply border border-border/80 bg-background/75 shadow-sm backdrop-blur-xl;
-}
-
-.command-bar {
-  @apply border border-border/80 bg-muted/40 shadow-sm;
-}
-
-.mono-soft {
-  font-family: 'SFMono-Regular', 'Cascadia Code', 'Roboto Mono', 'Menlo', monospace;
-}
-
-/* Method colors */
-.method-get { @apply text-emerald-500 dark:text-emerald-300; }
-.method-post { @apply text-sky-600 dark:text-sky-300; }
-.method-put { @apply text-amber-600 dark:text-amber-300; }
-.method-patch { @apply text-violet-600 dark:text-violet-300; }
-.method-delete { @apply text-rose-600 dark:text-rose-300; }
-.method-head { @apply text-cyan-600 dark:text-cyan-300; }
-.method-options { @apply text-slate-600 dark:text-slate-300; }
-
-/* Status code colors */
-.status-2xx { @apply bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20; }
-.status-3xx { @apply bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20; }
-.status-4xx { @apply bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20; }
-.status-5xx { @apply bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20; }

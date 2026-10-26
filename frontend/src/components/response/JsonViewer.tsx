@@ -1,129 +1,172 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface JsonViewerProps {
-  data: any;
+  data: unknown;
   initialExpanded?: boolean;
+  depth?: number;
 }
 
-export function JsonViewer({ data, initialExpanded = true }: JsonViewerProps) {
-  if (data === null) {
-    return <span className="text-orange-500">null</span>;
-  }
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
-  if (typeof data === 'undefined') {
+function PrimitiveValue({ value }: { value: unknown }) {
+  if (value === null) {
+    return <span className="text-[hsl(var(--json-null))]">null</span>;
+  }
+  if (typeof value === 'undefined') {
     return <span className="text-muted-foreground">undefined</span>;
   }
-
-  if (typeof data === 'boolean') {
-    return <span className="text-purple-500">{String(data)}</span>;
+  if (typeof value === 'boolean') {
+    return <span className="text-[hsl(var(--json-boolean))]">{String(value)}</span>;
   }
-
-  if (typeof data === 'number') {
-    return <span className="text-blue-500">{data}</span>;
+  if (typeof value === 'number') {
+    return <span className="text-[hsl(var(--json-number))]">{String(value)}</span>;
   }
-
-  if (typeof data === 'string') {
-    // Check if it's a URL
-    if (data.match(/^https?:\/\//)) {
+  if (typeof value === 'string') {
+    const isLink = /^https?:\/\//.test(value);
+    if (isLink) {
       return (
-        <a href={data} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:underline">
-          {`"${data}"`}
+        <a
+          href={value}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="break-all text-[hsl(var(--json-string))] underline decoration-[hsl(var(--json-string))]/35 underline-offset-2 hover:decoration-current"
+        >
+          &quot;{value}&quot;
         </a>
       );
     }
-    return <span className="text-green-500">{`"${data}"`}</span>;
+    return (
+      <span className="break-words text-[hsl(var(--json-string))]">
+        &quot;{value}&quot;
+      </span>
+    );
   }
-
-  if (Array.isArray(data)) {
-    return <JsonArray data={data} initialExpanded={initialExpanded} />;
-  }
-
-  if (typeof data === 'object') {
-    return <JsonObject data={data} initialExpanded={initialExpanded} />;
-  }
-
-  return <span>{String(data)}</span>;
+  return <span className="text-muted-foreground">{String(value)}</span>;
 }
 
-function JsonObject({ data, initialExpanded }: { data: Record<string, any>; initialExpanded: boolean }) {
-  const [expanded, setExpanded] = useState(initialExpanded);
-  const entries = Object.entries(data);
-
-  if (entries.length === 0) {
-    return <span className="text-muted-foreground">{'{}'}</span>;
-  }
-
+function ToggleButton({
+  expanded,
+  onClick,
+  label,
+}: {
+  expanded: boolean;
+  onClick: () => void;
+  label: string;
+}) {
   return (
-    <div className="json-viewer">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="inline-flex items-center hover:text-primary"
-      >
-        {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        <span className="text-muted-foreground">{'{'}</span>
-        {!expanded && (
-          <span className="text-muted-foreground ml-1">
-            {entries.length} {entries.length === 1 ? 'key' : 'keys'}
-          </span>
-        )}
-        {!expanded && <span className="text-muted-foreground">{'}'}</span>}
-      </button>
-      
-      {expanded && (
-        <div className="ml-4 border-l border-border pl-2">
-          {entries.map(([key, value], index) => (
-            <div key={key}>
-              <span className="text-primary">{`"${key}"`}</span>
-              <span className="text-muted-foreground">: </span>
-              <JsonViewer data={value} initialExpanded={false} />
-              {index < entries.length - 1 && <span className="text-muted-foreground">,</span>}
-            </div>
-          ))}
-        </div>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={expanded}
+      aria-label={label}
+      className="-ml-4 mr-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-muted-foreground/70 transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+    >
+      {expanded ? (
+        <ChevronDown className="h-3 w-3" aria-hidden />
+      ) : (
+        <ChevronRight className="h-3 w-3" aria-hidden />
       )}
-      {expanded && <span className="text-muted-foreground">{'}'}</span>}
-    </div>
+    </button>
   );
 }
 
-function JsonArray({ data, initialExpanded }: { data: any[]; initialExpanded: boolean }) {
-  const [expanded, setExpanded] = useState(initialExpanded);
+export function JsonViewer({ data, initialExpanded = true, depth = 0 }: JsonViewerProps) {
+  if (Array.isArray(data)) {
+    return <JsonCollection data={data} initialExpanded={initialExpanded} depth={depth} variant="array" />;
+  }
 
-  if (data.length === 0) {
-    return <span className="text-muted-foreground">[]</span>;
+  if (isRecord(data)) {
+    return <JsonCollection data={data} initialExpanded={initialExpanded} depth={depth} variant="object" />;
+  }
+
+  return <PrimitiveValue value={data} />;
+}
+
+function JsonCollection({
+  data,
+  initialExpanded,
+  depth,
+  variant,
+}: {
+  data: Record<string, unknown> | unknown[];
+  initialExpanded: boolean;
+  depth: number;
+  variant: 'object' | 'array';
+}) {
+  const [expanded, setExpanded] = useState(initialExpanded || depth === 0);
+  const entries: [string, unknown][] = Array.isArray(data)
+    ? data.map((value, index) => [String(index), value])
+    : Object.entries(data);
+  const openBrace = variant === 'array' ? '[' : '{';
+  const closeBrace = variant === 'array' ? ']' : '}';
+  const countLabel = `${entries.length} ${entries.length === 1 ? (variant === 'array' ? 'item' : 'key') : variant === 'array' ? 'items' : 'keys'}`;
+
+  if (entries.length === 0) {
+    return (
+      <span className="text-muted-foreground">
+        {openBrace}
+        {closeBrace}
+      </span>
+    );
   }
 
   return (
-    <div className="json-viewer">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="inline-flex items-center hover:text-primary"
-      >
-        {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        <span className="text-muted-foreground">[</span>
-        {!expanded && (
-          <span className="text-muted-foreground ml-1">
-            {data.length} {data.length === 1 ? 'item' : 'items'}
-          </span>
-        )}
-        {!expanded && <span className="text-muted-foreground">]</span>}
-      </button>
-      
-      {expanded && (
-        <div className="ml-4 border-l border-border pl-2">
-          {data.map((item, index) => (
-            <div key={index}>
-              <JsonViewer data={item} initialExpanded={false} />
-              {index < data.length - 1 && <span className="text-muted-foreground">,</span>}
-            </div>
-          ))}
-        </div>
-      )}
-      {expanded && <span className="text-muted-foreground">]</span>}
+    <div className={cn('json-viewer', depth > 0 && 'pl-1')}>
+      <div className="flex items-start">
+        <ToggleButton
+          expanded={expanded}
+          onClick={() => setExpanded((value) => !value)}
+          label={expanded ? `Collapse ${countLabel}` : `Expand ${countLabel}`}
+        />
+        <span className="text-muted-foreground">{openBrace}</span>
+        {!expanded ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              className="mx-1 rounded px-1 text-2xs text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+            >
+              {countLabel}
+            </button>
+            <span className="text-muted-foreground">{closeBrace}</span>
+          </>
+        ) : null}
+      </div>
+
+      {expanded ? (
+        <>
+          <div className="ml-[0.45rem] border-l border-border/70 pl-3">
+            {entries.map(([key, value], index) => (
+              <div key={key} className="group flex items-start rounded-sm hover:bg-surface-2/30">
+                <div className="min-w-0 flex-1 break-words py-px">
+                  {variant === 'object' ? (
+                    <>
+                      <span className="text-[hsl(var(--json-key))]">&quot;{key}&quot;</span>
+                      <span className="text-muted-foreground">: </span>
+                    </>
+                  ) : (
+                    <span className="select-none text-muted-foreground/55">{key}: </span>
+                  )}
+                  <JsonViewer data={value} initialExpanded={false} depth={depth + 1} />
+                  {index < entries.length - 1 ? (
+                    <span className="text-muted-foreground/70">,</span>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-start">
+            <span className="w-4 shrink-0" aria-hidden />
+            <span className="text-muted-foreground">{closeBrace}</span>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

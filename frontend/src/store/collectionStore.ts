@@ -17,6 +17,7 @@ interface CollectionState {
   
   // Endpoints
   selectEndpoint: (endpoint: Endpoint | null) => void;
+  clearSelection: () => void;
   createEndpoint: (collectionId: string, data: Partial<Endpoint>) => Promise<Endpoint>;
   updateEndpoint: (id: string, data: Partial<Endpoint>) => Promise<void>;
   deleteEndpoint: (id: string) => Promise<void>;
@@ -93,6 +94,8 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
   },
 
   selectEndpoint: (endpoint) => set({ currentEndpoint: endpoint }),
+
+  clearSelection: () => set({ currentCollection: null, currentEndpoint: null }),
 
   createEndpoint: async (collectionId, data) => {
     const response = await endpointApi.create(collectionId, data);

@@ -1,552 +1,314 @@
 'use client';
 
-import { useTheme } from '@/components/ThemeProvider';
+import { useMemo } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  Building2,
+  ChevronRight,
+  Clock3,
+  Globe2,
+  History,
+  LogOut,
+  Menu,
+  Monitor,
+  Moon,
+  Settings2,
+  Sun,
+  Users,
+} from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 import { useEnvironmentStore } from '@/store/environmentStore';
 import { useWorkspaceStore } from '@/store/workspaceStore';
+import { useTheme } from '@/components/ThemeProvider';
+import { NovaLogo, NovaMark } from '@/components/brand/NovaLogo';
 import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
-import { Modal } from '@/components/ui/Modal';
-import { Input } from '@/components/ui/Input';
-import { cn } from '@/lib/utils';
 import {
-  Moon,
-  Sun,
-  History,
-  Settings,
-  Globe,
-  Plus,
-  Trash2,
-  X,
-  Zap,
-  Users,
-  Loader2,
-  Mail,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+  Dropdown,
+  DropdownContent,
+  DropdownGroup,
+  DropdownItem,
+  DropdownLabel,
+  DropdownRadioGroup,
+  DropdownRadioItem,
+  DropdownSeparator,
+  DropdownSub,
+  DropdownSubContent,
+  DropdownSubTrigger,
+  DropdownTrigger,
+} from '@/components/ui/Dropdown';
+import { cn, getInitials } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
-export function Header() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard': 'Overview',
+  '/dashboard/request': 'Request builder',
+  '/dashboard/history': 'History',
+};
+
+interface HeaderProps {
+  onOpenSidebar: () => void;
+  onOpenWorkspace: () => void;
+  onOpenEnvironment: () => void;
+}
+
+export function Header({ onOpenSidebar, onOpenWorkspace, onOpenEnvironment }: HeaderProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const { workspaces, activeWorkspaceId, setActiveWorkspace } = useWorkspaceStore();
   const {
     environments,
     activeEnvironmentId,
     setActiveEnvironment,
-    addEnvironment,
-    deleteEnvironment,
-    updateVariable,
-    addVariable,
-    removeVariable
   } = useEnvironmentStore();
-  const {
-    workspaces,
-    activeWorkspaceId,
-    setActiveWorkspace,
-    createWorkspace,
-    fetchMembers,
-    fetchWorkspacePendingInvites,
-    revokeWorkspaceInvite,
-    members,
-    workspacePendingInvites,
-    inviteMember,
-    updateMemberRole,
-    removeMember,
-    isMembersLoading,
-    isWorkspaceInvitesLoading,
-  } = useWorkspaceStore();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
-  const [showEnvModal, setShowEnvModal] = useState(false);
-  const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
-  const [newEnvName, setNewEnvName] = useState('');
-  const [newWorkspaceName, setNewWorkspaceName] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'owner' | 'admin' | 'member'>('member');
+  const activeWorkspace = useMemo(
+    () => workspaces.find((workspace) => workspace.id === activeWorkspaceId) || workspaces[0],
+    [workspaces, activeWorkspaceId]
+  );
+  const activeEnvironment =
+    environments.find((environment) => environment.id === activeEnvironmentId) ||
+    environments.find((environment) => environment.id === 'globals');
+  const pageTitle = PAGE_TITLES[pathname] || 'Workspace';
 
-  const activeEnv = environments.find(e => e.id === activeEnvironmentId) || environments.find(e => e.id === 'globals');
-  const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId) || workspaces[0];
-  const activeWorkspaceIdSafe = activeWorkspace?.id || null;
-  const canManageMembers = activeWorkspace?.role === 'owner' || activeWorkspace?.role === 'admin';
-
-  useEffect(() => {
-    if (showWorkspaceModal && activeWorkspaceIdSafe) {
-      Promise.all([
-        fetchMembers(activeWorkspaceIdSafe),
-        fetchWorkspacePendingInvites(activeWorkspaceIdSafe),
-      ]).catch(() => {
-        toast.error('Failed to load workspace members or invitations');
-      });
-    }
-  }, [
-    showWorkspaceModal,
-    activeWorkspaceIdSafe,
-    fetchMembers,
-    fetchWorkspacePendingInvites,
-  ]);
-
-  const handleCreateWorkspace = async () => {
-    if (!newWorkspaceName.trim()) return;
-    try {
-      await createWorkspace(newWorkspaceName.trim());
-      setNewWorkspaceName('');
-      toast.success('Workspace created');
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to create workspace');
-    }
-  };
-
-  const handleInviteMember = async () => {
-    if (!activeWorkspaceIdSafe || !inviteEmail.trim()) return;
-    try {
-      const result = await inviteMember(activeWorkspaceIdSafe, inviteEmail.trim(), inviteRole);
-      setInviteEmail('');
-      if (result.member) {
-        toast.success('Member added to this workspace');
-      } else if (result.invitation) {
-        toast.success(
-          result.message ||
-            'Invitation saved — they will join when they sign up or log in with that email.'
-        );
-      } else {
-        toast.success('Done');
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to invite member');
-    }
-  };
-
-  const handleCreateEnvironment = async () => {
-    if (!newEnvName.trim()) return;
-    try {
-      await addEnvironment(newEnvName.trim());
-      setNewEnvName('');
-      toast.success('Environment created');
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || error.message || 'Failed to create environment');
-    }
-  };
-
-  const handleDeleteEnvironment = async () => {
-    if (!activeEnv?.id || activeEnv.id === 'globals') return;
-    try {
-      await deleteEnvironment(activeEnv.id);
-      toast.success('Environment deleted');
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || error.message || 'Failed to delete environment');
-    }
+  const handleSignOut = () => {
+    logout();
+    toast.success('Signed out');
+    router.push('/auth/login');
   };
 
   return (
-    <header className="h-16 flex items-center px-3 sm:px-5 justify-between bg-background/70 backdrop-blur-xl sticky top-0 z-50">
-      <div className="flex items-center gap-3 lg:gap-6 min-w-0">
-        <Link href="/dashboard" className="flex items-center gap-2.5 font-extrabold text-lg tracking-tight hover:text-primary transition-colors group shrink-0">
-          <div className="p-1.5 bg-primary rounded-md shadow-sm shadow-primary/30 group-hover:rotate-6 transition-transform">
-            <Zap className="h-5 w-5 text-primary-foreground fill-primary-foreground" />
-          </div>
-          <span className="hidden sm:inline">Nova Request</span>
-        </Link>
-        <div className="h-7 w-px bg-border hidden lg:block" />
-        <div className="hidden md:flex items-center gap-1.5 rounded-lg border border-border/80 bg-muted/40 pl-2 pr-1 py-1 shadow-sm">
-          <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0 pointer-events-none" aria-hidden />
-          <Select
-            value={activeWorkspace?.id || ''}
-            onChange={(e) => setActiveWorkspace(e.target.value)}
-            className="min-w-0 w-44 lg:w-52 h-8 text-[11px] font-bold bg-transparent border-none shadow-none pr-7 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 cursor-pointer"
-            disabled={workspaces.length === 0}
-          >
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-2.5 sm:px-4">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="lg:hidden"
+        onClick={onOpenSidebar}
+        aria-label="Open navigation"
+      >
+        <Menu className="h-4 w-4" aria-hidden />
+      </Button>
+
+      <NovaLogo className="hidden md:inline-flex" />
+      <Link
+        href="/dashboard"
+        className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/65 md:hidden"
+        aria-label="Nova Request home"
+      >
+        <NovaMark size={28} />
+      </Link>
+
+      <div className="mx-1 hidden h-5 w-px bg-border md:block" aria-hidden />
+
+      <div className="flex min-w-0 items-center gap-2">
+        <Dropdown>
+          <DropdownTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="max-w-[10.5rem] gap-1.5 px-2 text-muted-foreground sm:max-w-[15rem]"
+              aria-label="Switch workspace"
+            >
+              <Building2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="truncate text-xs font-medium">
+                {activeWorkspace?.name || 'No workspace'}
+              </span>
+              <ChevronRight
+                className="hidden h-3 w-3 shrink-0 rotate-90 opacity-50 sm:block"
+                aria-hidden
+              />
+            </Button>
+          </DropdownTrigger>
+          <DropdownContent align="start" className="w-64">
+            <DropdownLabel>Workspace</DropdownLabel>
+            <DropdownRadioGroup
+              value={activeWorkspace?.id || ''}
+              onValueChange={(value) => setActiveWorkspace(value)}
+            >
+              {workspaces.map((workspace) => (
+                <DropdownRadioItem key={workspace.id} value={workspace.id}>
+                  <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                    <span className="truncate">{workspace.name}</span>
+                    <span className="shrink-0 text-2xs capitalize text-muted-foreground">
+                      {workspace.role} · {workspace.memberCount}
+                    </span>
+                  </span>
+                </DropdownRadioItem>
+              ))}
+            </DropdownRadioGroup>
             {workspaces.length === 0 ? (
-              <option value="">No workspace</option>
-            ) : (
-              workspaces.map((workspace) => (
-                <option key={workspace.id} value={workspace.id}>
-                  {workspace.name} - {workspace.role}
-                </option>
-              ))
-            )}
-          </Select>
-          <Button
-            variant="ghost"
-            size="icon"
-            type="button"
-            className={cn(
-              'h-8 w-8 min-w-8 shrink-0 rounded-md',
-              'text-muted-foreground hover:text-foreground hover:bg-primary/10',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
-              'active:scale-100 active:bg-primary/15',
-              'transition-colors'
-            )}
-            onClick={() => setShowWorkspaceModal(true)}
-            title="Manage workspace"
-          >
-            <Users className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="hidden xl:block h-7 w-px bg-border" />
-        <div className="hidden sm:flex items-center gap-1.5 rounded-lg border border-border/80 bg-muted/40 pl-2 pr-1 py-1 shadow-sm">
-          <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0 pointer-events-none" aria-hidden />
-          <Select
-            value={activeEnvironmentId || 'globals'}
-            onChange={(e) => setActiveEnvironment(e.target.value === 'globals' ? null : e.target.value)}
-            className="min-w-0 w-36 lg:w-44 h-8 text-[11px] font-bold bg-transparent border-none shadow-none pr-7 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 cursor-pointer"
-          >
-            <option value="globals">No Environment</option>
-            {environments.filter(e => e.id !== 'globals').map((env) => (
-              <option key={env.id} value={env.id}>{env.name}</option>
-            ))}
-          </Select>
-          <Button
-            variant="ghost"
-            size="icon"
-            type="button"
-            className={cn(
-              'h-8 w-8 min-w-8 shrink-0 rounded-md',
-              'text-muted-foreground hover:text-foreground hover:bg-primary/10',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40',
-              'active:scale-100 active:bg-primary/15',
-              'transition-colors'
-            )}
-            onClick={() => setShowEnvModal(true)}
-            title="Environment variables"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        </div>
+              <p className="px-2 py-2 text-xs text-muted-foreground">No workspaces yet.</p>
+            ) : null}
+            <DropdownSeparator />
+            <DropdownItem onSelect={onOpenWorkspace}>
+              <Settings2 className="h-3.5 w-3.5" aria-hidden />
+              Workspace settings
+            </DropdownItem>
+            <DropdownItem onSelect={onOpenWorkspace}>
+              <Users className="h-3.5 w-3.5" aria-hidden />
+              Members & invitations
+            </DropdownItem>
+          </DropdownContent>
+        </Dropdown>
+
+        <span className="hidden items-center gap-1.5 text-xs text-muted-foreground xl:flex">
+          <ChevronRight className="h-3.5 w-3.5 opacity-50" aria-hidden />
+          <span className="font-medium text-foreground">{pageTitle}</span>
+        </span>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Link href="/dashboard/history">
-          <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10 transition-all active:scale-90" title="History">
-            <History className="h-5 w-5" />
-          </Button>
-        </Link>
-        
+      <div className="ml-auto flex items-center gap-1">
+        <Dropdown>
+          <DropdownTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden max-w-[12rem] gap-1.5 px-2 text-muted-foreground sm:inline-flex"
+              aria-label="Switch environment"
+            >
+              <Globe2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="truncate text-xs font-medium">
+                {activeEnvironmentId ? activeEnvironment?.name : 'Globals only'}
+              </span>
+              <ChevronRight
+                className="h-3 w-3 shrink-0 rotate-90 opacity-50"
+                aria-hidden
+              />
+            </Button>
+          </DropdownTrigger>
+          <DropdownContent align="end" className="w-60">
+            <DropdownLabel>Environment</DropdownLabel>
+            <DropdownRadioGroup
+              value={activeEnvironmentId || 'globals'}
+              onValueChange={(value) =>
+                setActiveEnvironment(value === 'globals' ? null : value)
+              }
+            >
+              <DropdownRadioItem value="globals">
+                <span className="flex flex-1 items-center justify-between gap-2">
+                  No environment
+                  <span className="text-2xs text-muted-foreground">globals only</span>
+                </span>
+              </DropdownRadioItem>
+              {environments
+                .filter((environment) => environment.id !== 'globals')
+                .map((environment) => (
+                  <DropdownRadioItem key={environment.id} value={environment.id}>
+                    <span className="flex-1 truncate">{environment.name}</span>
+                  </DropdownRadioItem>
+                ))}
+            </DropdownRadioGroup>
+            <DropdownSeparator />
+            <DropdownItem onSelect={onOpenEnvironment}>
+              <Settings2 className="h-3.5 w-3.5" aria-hidden />
+              Manage variables
+            </DropdownItem>
+          </DropdownContent>
+        </Dropdown>
+
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 hover:bg-primary/10 transition-all active:scale-90"
+          className={cn(
+            'hidden text-muted-foreground sm:inline-flex',
+            pathname === '/dashboard/history' && 'bg-surface-2 text-foreground'
+          )}
+          aria-label="Request history"
+          title="Request history"
+          onClick={() => router.push('/dashboard/history')}
+        >
+          <History className="h-4 w-4" aria-hidden />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground"
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          title="Toggle Theme"
+          aria-label={resolvedTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          title={resolvedTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
         >
           {resolvedTheme === 'dark' ? (
-            <Sun className="h-5 w-5" />
+            <Sun className="h-4 w-4" aria-hidden />
           ) : (
-            <Moon className="h-5 w-5" />
+            <Moon className="h-4 w-4" aria-hidden />
           )}
         </Button>
-      </div>
 
-      {/* Workspace Manager Modal */}
-      <Modal
-        isOpen={showWorkspaceModal}
-        onClose={() => setShowWorkspaceModal(false)}
-        title="Workspace Manager"
-        className="max-w-5xl"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-[1.1fr_1.9fr] gap-6 mt-4">
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-muted/20 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-sm">Workspaces</h3>
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  {workspaces.length} total
-                </span>
-              </div>
-              <div className="space-y-1">
-                {workspaces.map((workspace) => (
-                  <button
-                    key={workspace.id}
-                    onClick={() => setActiveWorkspace(workspace.id)}
-                    className={cn(
-                      'w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all',
-                      workspace.id === activeWorkspace?.id
-                        ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
-                        : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="truncate">{workspace.name}</span>
-                      <span className="text-[10px] uppercase">{workspace.role}</span>
-                    </div>
-                  </button>
-                ))}
-                {workspaces.length === 0 && (
-                  <p className="text-xs text-muted-foreground">No workspaces yet</p>
-                )}
-              </div>
-              <div className="mt-4 flex gap-2">
-                <Input
-                  placeholder="New workspace name"
-                  value={newWorkspaceName}
-                  onChange={(e) => setNewWorkspaceName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreateWorkspace()}
-                  className="h-9 text-xs"
-                />
-                <Button size="icon" className="h-9 w-9" onClick={handleCreateWorkspace}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+        <Dropdown>
+          <DropdownTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-0.5 h-8 gap-2 rounded-full px-1.5 text-muted-foreground sm:pr-2.5"
+              aria-label="Account menu"
+            >
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-3xs font-semibold text-primary">
+                {getInitials(user?.name, user?.email)}
+              </span>
+              <span className="hidden max-w-24 truncate text-xs font-medium text-foreground md:block">
+                {user?.name || user?.email}
+              </span>
+            </Button>
+          </DropdownTrigger>
+          <DropdownContent align="end" className="w-64">
+            <div className="px-2 py-2">
+              <p className="truncate text-xs font-semibold text-foreground">
+                {user?.name || 'Nova user'}
+              </p>
+              <p className="mt-0.5 truncate text-2xs text-muted-foreground">{user?.email}</p>
             </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-extrabold text-xl tracking-tight">{activeWorkspace?.name || 'Workspace'}</h3>
-                <p className="text-xs text-muted-foreground">
-                  Role: {activeWorkspace?.role || 'member'}
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-background p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Input
-                  placeholder="Invite by email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="h-9 text-xs"
-                  disabled={!canManageMembers}
-                />
-                <Select
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as 'owner' | 'admin' | 'member')}
-                  className="h-9 text-xs w-32"
-                  disabled={!canManageMembers}
-                >
-                  <option value="member">Member</option>
-                  <option value="admin">Admin</option>
-                  <option value="owner">Owner</option>
-                </Select>
-                <Button
-                  className="h-9"
-                  onClick={handleInviteMember}
-                  disabled={!canManageMembers || !inviteEmail.trim()}
-                >
-                  Invite
-                </Button>
-              </div>
-
-              {canManageMembers ? (
-                <div className="mb-4 rounded-xl border border-dashed border-border/80 bg-muted/10 p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <h4 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
-                      <Mail className="h-3.5 w-3.5" aria-hidden />
-                      Pending invitations
-                    </h4>
-                    {isWorkspaceInvitesLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    ) : null}
-                  </div>
-                  {workspacePendingInvites.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      No pending email invitations. Inviting someone who does not have an account yet
-                      creates an invitation they complete when they register or sign in.
-                    </p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {workspacePendingInvites.map((inv) => (
-                        <li
-                          key={inv.id}
-                          className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-xs"
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold">{inv.email}</p>
-                            <p className="capitalize text-muted-foreground">{inv.role}</p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                            title="Revoke invitation"
-                            onClick={async () => {
-                              try {
-                                await revokeWorkspaceInvite(activeWorkspace!.id, inv.id);
-                                toast.success('Invitation revoked');
-                              } catch (error: any) {
-                                toast.error(error.response?.data?.error || 'Failed to revoke');
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ) : null}
-
-              <div className="space-y-2">
-                {isMembersLoading ? (
-                  <div className="flex items-center justify-center py-6">
-                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-                  </div>
-                ) : members.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No members yet</p>
+            <DropdownSeparator />
+            <DropdownItem onSelect={onOpenWorkspace}>
+              <Users className="h-3.5 w-3.5" aria-hidden />
+              Workspace & members
+            </DropdownItem>
+            <DropdownItem onSelect={onOpenEnvironment}>
+              <Globe2 className="h-3.5 w-3.5" aria-hidden />
+              Environments
+            </DropdownItem>
+            <DropdownItem onSelect={() => router.push('/dashboard/history')}>
+              <Clock3 className="h-3.5 w-3.5" aria-hidden />
+              Request history
+            </DropdownItem>
+            <DropdownSeparator />
+            <DropdownSub>
+              <DropdownSubTrigger>
+                {resolvedTheme === 'dark' ? (
+                  <Moon className="h-3.5 w-3.5" aria-hidden />
                 ) : (
-                  members.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-                      <div>
-                        <p className="text-sm font-semibold">{member.user.name}</p>
-                        <p className="text-xs text-muted-foreground">{member.user.email}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Select
-                          value={member.role}
-                          onChange={async (e) => {
-                            try {
-                              await updateMemberRole(activeWorkspace!.id, member.id, e.target.value as 'owner' | 'admin' | 'member');
-                              toast.success('Role updated');
-                            } catch (error: any) {
-                              toast.error(error.response?.data?.error || 'Failed to update role');
-                            }
-                          }}
-                          className="h-8 text-xs w-28"
-                          disabled={!canManageMembers}
-                        >
-                          <option value="member">Member</option>
-                          <option value="admin">Admin</option>
-                          <option value="owner">Owner</option>
-                        </Select>
-                        {canManageMembers && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={async () => {
-                              try {
-                                await removeMember(activeWorkspace!.id, member.id);
-                                toast.success('Member removed');
-                              } catch (error: any) {
-                                toast.error(error.response?.data?.error || 'Failed to remove member');
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))
+                  <Sun className="h-3.5 w-3.5" aria-hidden />
                 )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Environment Manager Modal */}
-      <Modal
-        isOpen={showEnvModal}
-        onClose={() => setShowEnvModal(false)}
-        title="Environment Manager"
-        className="max-w-4xl"
-      >
-        <div className="flex h-[500px] gap-6 mt-4">
-          {/* Sidebar */}
-          <div className="w-48 flex flex-col gap-2 border-r border-border pr-6">
-             <div className="space-y-1">
-               {environments.map(env => (
-                 <button
-                   key={env.id}
-                   onClick={() => setActiveEnvironment(env.id === 'globals' ? null : env.id)}
-                   className={cn(
-                     "w-full text-left px-3 py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-tight transition-all",
-                     (env.id === activeEnvironmentId || (env.id === 'globals' && !activeEnvironmentId)) 
-                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
-                      : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                   )}
-                 >
-                   {env.name}
-                 </button>
-               ))}
-             </div>
-             <div className="mt-auto pt-4 border-t border-border">
-                <div className="flex gap-1">
-                  <Input 
-                    placeholder="Env Name..." 
-                    className="h-8 text-[10px]" 
-                    value={newEnvName}
-                    onChange={(e) => setNewEnvName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && newEnvName.trim()) {
-                        handleCreateEnvironment();
-                      }
-                    }}
-                  />
-                  <Button 
-                    size="icon" 
-                    className="h-8 w-8 min-w-[32px]" 
-                    onClick={() => handleCreateEnvironment()}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-             </div>
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-             <div className="flex items-center justify-between mb-4">
-                <div>
-                   <h3 className="font-extrabold text-xl tracking-tight">{activeEnv?.name}</h3>
-                   <p className="text-xs text-muted-foreground">Manage variables for this environment context.</p>
-                </div>
-                {activeEnv?.id !== 'globals' && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-destructive hover:bg-destructive/10" 
-                    onClick={() => handleDeleteEnvironment()}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-             </div>
-
-             <div className="flex-1 overflow-auto bg-muted/20 rounded-2xl border border-border p-6">
-                <div className="grid grid-cols-[1fr_1fr_auto] gap-4 text-[10px] uppercase font-black text-muted-foreground/60 mb-4 px-2 tracking-widest">
-                   <div>Variable Name</div>
-                   <div>Initial Value</div>
-                   <div className="w-9"></div>
-                </div>
-                <div className="space-y-2">
-                  {activeEnv?.variables.map((v, i) => (
-                    <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center group animate-in fade-in slide-in-from-top-1">
-                      <Input 
-                        placeholder="e.g. host" 
-                        value={v.key} 
-                        onChange={(e) => updateVariable(activeEnv.id, i, { ...v, key: e.target.value })}
-                        className="h-10 text-xs font-mono font-bold bg-background focus:ring-primary/20"
-                      />
-                      <Input 
-                        placeholder="Value" 
-                        value={v.value} 
-                        onChange={(e) => updateVariable(activeEnv.id, i, { ...v, value: e.target.value })}
-                        className="h-10 text-xs font-mono bg-background focus:ring-primary/20"
-                      />
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-10 w-10 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all rounded-lg" 
-                        onClick={() => removeVariable(activeEnv.id, i)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button 
-                    variant="ghost" 
-                    className="w-full h-10 border-2 border-dashed border-border hover:bg-primary/5 hover:border-primary/20 text-xs font-extrabold uppercase tracking-wide mt-4 rounded-xl transition-all" 
-                    onClick={() => addVariable(activeEnv!.id)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Variable
-                  </Button>
-                </div>
-             </div>
-          </div>
-        </div>
-      </Modal>
+                Theme
+              </DropdownSubTrigger>
+              <DropdownSubContent>
+                <DropdownRadioGroup value={theme} onValueChange={(value) => setTheme(value as typeof theme)}>
+                  <DropdownRadioItem value="light">
+                    <Sun className="h-3.5 w-3.5" aria-hidden />
+                    Light
+                  </DropdownRadioItem>
+                  <DropdownRadioItem value="dark">
+                    <Moon className="h-3.5 w-3.5" aria-hidden />
+                    Dark
+                  </DropdownRadioItem>
+                  <DropdownRadioItem value="system">
+                    <Monitor className="h-3.5 w-3.5" aria-hidden />
+                    System
+                  </DropdownRadioItem>
+                </DropdownRadioGroup>
+              </DropdownSubContent>
+            </DropdownSub>
+            <DropdownSeparator />
+            <DropdownItem destructive onSelect={handleSignOut}>
+              <LogOut className="h-3.5 w-3.5" aria-hidden />
+              Sign out
+            </DropdownItem>
+          </DropdownContent>
+        </Dropdown>
+      </div>
     </header>
   );
 }

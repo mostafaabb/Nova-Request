@@ -1,37 +1,70 @@
 import { forwardRef } from 'react';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+type ButtonVariant =
+  | 'default'
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'destructive'
+  | 'outline';
+type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'icon';
+
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'primary' | 'secondary' | 'ghost' | 'destructive' | 'outline';
-  size?: 'sm' | 'md' | 'lg' | 'icon';
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  loading?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', size = 'md', ...props }, ref) => {
+  (
+    {
+      className,
+      variant = 'secondary',
+      size = 'md',
+      loading = false,
+      disabled,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     return (
       <button
         ref={ref}
+        disabled={disabled || loading}
         className={cn(
-          'inline-flex items-center justify-center rounded-md font-medium transition-colors',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          'inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg text-[13px] font-medium',
+          'transition-[background-color,border-color,color,box-shadow,transform] duration-150',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/65 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           'disabled:pointer-events-none disabled:opacity-50',
           {
-            'bg-primary text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90 active:scale-[0.98]': variant === 'default' || variant === 'primary',
-            'bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-[0.98]': variant === 'secondary',
-            'hover:bg-accent hover:text-accent-foreground active:scale-[0.98]': variant === 'ghost',
-            'bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-[0.98]': variant === 'destructive',
-            'border border-input bg-background/70 shadow-sm hover:bg-accent hover:text-accent-foreground active:scale-[0.98]': variant === 'outline',
+            'bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover active:translate-y-px':
+              variant === 'default' || variant === 'primary',
+            'border border-border bg-surface-2 text-foreground hover:border-border-strong hover:bg-surface-3 active:translate-y-px':
+              variant === 'secondary',
+            'border border-border bg-transparent text-foreground hover:bg-surface-2 active:translate-y-px':
+              variant === 'outline',
+            'text-muted-foreground hover:bg-surface-2 hover:text-foreground active:translate-y-px':
+              variant === 'ghost',
+            'border border-destructive/25 bg-destructive/10 text-destructive hover:bg-destructive/15 active:translate-y-px':
+              variant === 'destructive',
           },
           {
-            'h-8 px-3 text-sm': size === 'sm',
-            'h-10 px-4 text-sm': size === 'md',
-            'h-11 px-6 text-base': size === 'lg',
-            'h-9 w-9': size === 'icon',
+            'h-7 px-2 text-xs': size === 'xs',
+            'h-8 px-2.5 text-xs': size === 'sm',
+            'h-9 px-3.5': size === 'md',
+            'h-10 px-4 text-sm': size === 'lg',
+            'h-9 w-9 p-0': size === 'icon',
           },
           className
         )}
         {...props}
-      />
+      >
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+        {children}
+      </button>
     );
   }
 );

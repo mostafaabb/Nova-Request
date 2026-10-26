@@ -30,6 +30,9 @@ export interface Tab {
   response: ApiResponse | null;
   isLoading: boolean;
   isDirty?: boolean;
+  endpointId?: string;
+  collectionId?: string;
+  endpointDescription?: string;
 }
 
 interface RequestState {
@@ -40,6 +43,7 @@ interface RequestState {
   removeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
   updateActiveTab: (updates: Partial<Tab>) => void;
+  markTabSaved: (updates?: Partial<Tab>) => void;
 
   sendRequest: (endpointId?: string) => Promise<void>;
 
@@ -118,6 +122,9 @@ const validateTab = (tab: any): Tab => ({
   response: tab.response ?? null,
   isLoading: tab.isLoading ?? false,
   isDirty: tab.isDirty || false,
+  endpointId: tab.endpointId || undefined,
+  collectionId: tab.collectionId || undefined,
+  endpointDescription: tab.endpointDescription || undefined,
 });
 
 export const useRequestStore = create<RequestState>()(
@@ -139,11 +146,15 @@ export const useRequestStore = create<RequestState>()(
             ? validateTab({
                 ...endpoint,
                 id,
+                endpointId: endpoint.id,
+                collectionId: endpoint.collectionId,
+                endpointDescription: endpoint.description,
                 auth: normalizeAuth(endpoint.auth),
                 formFields: ensureKeyValueList(endpoint.formFields),
                 tests: normalizeTests(endpoint.tests),
                 response: null,
                 isLoading: false,
+                isDirty: false,
               })
             : validateTab({ ...DEFAULT_TAB, id });
 
@@ -176,6 +187,16 @@ export const useRequestStore = create<RequestState>()(
         set((state) => ({
           tabs: state.tabs.map((t) =>
             t.id === state.activeTabId ? validateTab({ ...t, ...updates, isDirty: true }) : t
+          ),
+        }));
+      },
+
+      markTabSaved: (updates) => {
+        set((state) => ({
+          tabs: state.tabs.map((t) =>
+            t.id === state.activeTabId
+              ? validateTab({ ...t, ...updates, isDirty: false })
+              : t
           ),
         }));
       },

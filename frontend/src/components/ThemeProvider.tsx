@@ -12,44 +12,47 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function resolve(theme: Theme): 'light' | 'dark' {
+  if (theme === 'system') {
+    return typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
+  }
+  return theme;
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('system');
+  // Nova is a dark-first product. The inline script in the root layout applies
+  // the stored preference before paint; this state picks it up on mount.
+  const [theme, setTheme] = useState<Theme>('dark');
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
     const stored = localStorage.getItem('theme') as Theme | null;
-    if (stored) {
-      setTheme(stored);
-    }
+    const initial: Theme = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'dark';
+    setTheme(initial);
+    setResolvedTheme(resolve(initial));
   }, []);
 
   useEffect(() => {
     const root = document.documentElement;
-    
-    const applyTheme = (t: Theme) => {
-      if (t === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'dark'
-          : 'light';
-        root.classList.toggle('dark', systemTheme === 'dark');
-        setResolvedTheme(systemTheme);
-      } else {
-        root.classList.toggle('dark', t === 'dark');
-        setResolvedTheme(t);
-      }
-    };
+    const next = resolve(theme);
 
-    applyTheme(theme);
+    root.classList.toggle('dark', next === 'dark');
+    root.dataset.theme = next;
+    setResolvedTheme(next);
     localStorage.setItem('theme', theme);
 
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
-      if (theme === 'system') {
-        applyTheme('system');
-      }
+      if (theme !== 'system') return;
+      const systemTheme = resolve('system');
+      root.classList.toggle('dark', systemTheme === 'dark');
+      root.dataset.theme = systemTheme;
+      setResolvedTheme(systemTheme);
     };
-    
+
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
