@@ -40,10 +40,10 @@ jobs:
       github.event.workflow_run.head_branch == 'main'
 
     steps:
-      - name: Checkout repository
+      - name: Checkout tested commit
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -52,6 +52,12 @@ jobs:
 
       - name: Install Vercel CLI
         run: npm install --global vercel
+
+      - name: Verify Vercel authentication
+        run: vercel whoami --token="${{ secrets.VERCEL_TOKEN }}"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Pull Vercel production settings
         run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
